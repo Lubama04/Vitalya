@@ -2,7 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Clock } from "lucide-react"
 import { AccessBadge } from "@/components/article/access-badge"
-import { formatDate } from "@/lib/constants"
+import { accentOnWhite, formatDate } from "@/lib/constants"
 import type { ArticleSummary } from "@/lib/data"
 import { cn } from "@/lib/utils"
 
@@ -53,7 +53,7 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
           <Link
             href={`/categories/${article.category.slug}`}
             className="relative z-10 mb-2 w-fit text-xs font-semibold tracking-wider uppercase hover:underline"
-            style={{ color: article.category.color === "#1E2532" ? "#0D6B4A" : article.category.color }}
+            style={{ color: accentOnWhite(article.category.color) }}
           >
             {article.category.name}
           </Link>

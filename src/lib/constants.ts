@@ -112,6 +112,30 @@ export function slugify(input: string): string {
     .replace(/-+$/g, "")
 }
 
+/** Luminance relative WCAG d'une couleur hexadécimale (#RRGGBB). */
+function luminance(hex: string): number {
+  const channels = [1, 3, 5].map((index) => {
+    const value = Number.parseInt(hex.slice(index, index + 2), 16) / 255
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * channels[0]! + 0.7152 * channels[1]! + 0.0722 * channels[2]!
+}
+
+/** Couleur de texte (nuit ou blanc) offrant le meilleur contraste WCAG sur un fond donné. */
+export function textOn(background: string): string {
+  const bg = luminance(background)
+  const contrastWhite = 1.05 / (bg + 0.05)
+  const contrastNuit = (bg + 0.05) / (luminance("#1E2532") + 0.05)
+  return contrastNuit > contrastWhite ? "#1E2532" : "#FFFFFF"
+}
+
+/** Couleur d'accent lisible sur fond blanc (assombrit les couleurs trop claires). */
+export function accentOnWhite(color: string): string {
+  if (color.toUpperCase() === "#F4B942") return "#A86F00"
+  if (color.toUpperCase() === "#E8813A") return "#C2601B"
+  return color
+}
+
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",

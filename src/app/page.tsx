@@ -5,7 +5,7 @@ import { ArticleCard } from "@/components/article/article-card"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { Button } from "@/components/ui/button"
 import { getCategories, getLatestArticles } from "@/lib/data"
-import { PRICING } from "@/lib/constants"
+import { PRICING, textOn } from "@/lib/constants"
 
 export default async function HomePage() {
   const [{ articles }, categories] = await Promise.all([
@@ -127,13 +127,13 @@ export default async function HomePage() {
               <Link
                 key={category.id}
                 href={`/categories/${category.slug}`}
-                className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-2xl p-6 text-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
-                style={{ backgroundColor: category.color }}
+                className="group relative flex min-h-48 flex-col justify-between overflow-hidden rounded-2xl p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+                style={{ backgroundColor: category.color, color: textOn(category.color) }}
               >
                 <Leaf aria-hidden className="absolute -right-4 -bottom-4 size-28 opacity-15 transition-transform duration-500 group-hover:rotate-12" />
                 <h3 className="font-heading text-2xl leading-tight font-bold">{category.name}</h3>
                 <div>
-                  <p className="text-sm text-white/85 line-clamp-3">{category.description}</p>
+                  <p className="text-sm opacity-85 line-clamp-3">{category.description}</p>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">
                     Lire <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                   </span>
