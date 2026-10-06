@@ -1,26 +1,127 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ═══ Charte graphique Vitalya ═══ */
+@theme inline {
+  --color-vert-fonce: #0d6b4a;
+  --color-vert-emeraude: #1a9e6b;
+  --color-vert-pale: #d6f0e6;
+  --color-orange: #e8813a;
+  --color-or: #f4b942;
+  --color-nuit: #1e2532;
+  --color-creme: #faf7f2;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-playfair);
+  --font-serif: var(--font-playfair);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1e2532;
+  --card: #ffffff;
+  --card-foreground: #1e2532;
+  --popover: #ffffff;
+  --popover-foreground: #1e2532;
+  --primary: #0d6b4a;
+  --primary-foreground: #ffffff;
+  --secondary: #d6f0e6;
+  --secondary-foreground: #0d6b4a;
+  --muted: #f3f5f4;
+  --muted-foreground: #5b6472;
+  --accent: #fdf0e6;
+  --accent-foreground: #b85a1a;
+  --destructive: #c0392b;
+  --border: #e3e8e5;
+  --input: #d5ddd9;
+  --ring: #1a9e6b;
+  --radius: 0.75rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading tracking-tight;
+  }
+  ::selection {
+    background: #d6f0e6;
+    color: #0d6b4a;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Typographie éditoriale des articles */
+@layer components {
+  .prose-vitalya {
+    @apply text-[1.075rem] leading-[1.85] text-nuit/90;
+  }
+  .prose-vitalya > * + * {
+    @apply mt-5;
+  }
+  .prose-vitalya h2 {
+    @apply mt-12 mb-4 text-3xl font-bold text-vert-fonce;
+  }
+  .prose-vitalya h3 {
+    @apply mt-8 mb-3 text-xl font-semibold text-nuit;
+  }
+  .prose-vitalya a {
+    @apply text-vert-emeraude underline decoration-vert-emeraude/40 underline-offset-4 hover:decoration-vert-emeraude;
+  }
+  .prose-vitalya ul {
+    @apply list-disc space-y-2 pl-6 marker:text-vert-emeraude;
+  }
+  .prose-vitalya ol {
+    @apply list-decimal space-y-2 pl-6 marker:font-semibold marker:text-orange;
+  }
+  .prose-vitalya strong {
+    @apply font-semibold text-nuit;
+  }
+  .prose-vitalya blockquote {
+    @apply border-l-4 border-orange pl-5 font-heading text-xl italic text-vert-fonce;
+  }
+  .prose-vitalya > p:first-of-type::first-letter {
+    @apply float-left mr-3 mt-1 font-heading text-6xl leading-[0.85] font-bold text-vert-fonce;
+  }
+  .prose-vitalya hr {
+    @apply my-10 border-border;
+  }
 }
