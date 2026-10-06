@@ -118,8 +118,30 @@
   .prose-vitalya blockquote {
     @apply border-l-4 border-orange pl-5 font-heading text-xl italic text-vert-fonce;
   }
-  .prose-vitalya > p:first-of-type::first-letter {
+  .prose-vitalya h2,
+  .prose-vitalya h3 {
+    @apply scroll-mt-28;
+  }
+  /* Lettrine automatique sur le premier paragraphe, sauf si l'auteur en place une */
+  .prose-vitalya:not(:has(.lettrine)) > p:first-of-type::first-letter,
+  .lettrine > p:first-of-type::first-letter {
     @apply float-left mr-3 mt-1 font-heading text-6xl leading-[0.85] font-bold text-vert-fonce;
+  }
+  .prose-vitalya code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.9em] text-vert-fonce;
+  }
+  /* Sections qui sortent de la colonne de lecture */
+  .pleine-largeur {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+  }
+  /* Dans l'aperçu de l'éditeur, elles restent dans le panneau */
+  .apercu-mdx .pleine-largeur {
+    width: auto;
+    margin-left: 0;
+  }
+  .apercu-mdx [class*="lg:-mx-"] {
+    margin-inline: 0;
   }
   .prose-vitalya hr {
     @apply my-10 border-border;

@@ -7,7 +7,7 @@ import { AccessBadge } from "@/components/article/access-badge"
 import { ArticleCard } from "@/components/article/article-card"
 import { Comments } from "@/components/article/comments"
 import { LikeButton } from "@/components/article/like-button"
-import { MdxContent } from "@/components/article/mdx-content"
+import { MdxContent } from "@/components/mdx/mdx-content"
 import { Paywall } from "@/components/article/paywall"
 import { ShareButton } from "@/components/article/share-button"
 import { ViewTracker } from "@/components/article/view-tracker"
@@ -136,7 +136,7 @@ export default async function ArticlePage({ params }: Props) {
       {/* ─── Contenu ─── */}
       <div className="mx-auto max-w-3xl px-4 pt-12 sm:px-6">
         <div className="prose-vitalya">
-          <MdxContent source={article.content} />
+          <MdxContent source={article.content} context={{ articleId: article.id, categoryId: article.category?.id }} />
         </div>
 
         {!article.hasAccess && (

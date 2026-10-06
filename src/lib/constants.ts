@@ -94,9 +94,24 @@ export const PRICING: PricingTier[] = [
 /** Nombre de mots lus par minute pour le calcul du temps de lecture. */
 export const WORDS_PER_MINUTE = 200
 
+/**
+ * Nombre de mots réellement lus : balises MDX, attributs, URLs et
+ * syntaxe Markdown sont ignorés. Utilisé à l'identique par l'éditeur
+ * (temps réel) et par le serveur (enregistrement) : valeurs synchronisées.
+ */
+export function countWords(content: string): number {
+  const text = content
+    .replace(/```[\s\S]*?```/g, " ") // blocs de code
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // images Markdown
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // liens : on garde le texte
+    .replace(/<\/?[A-Za-z][^>]*>/g, " ") // balises JSX / HTML et leurs attributs
+    .replace(/https?:\/\/\S+/g, " ") // URLs nues
+    .replace(/[#*_>`~|=[\]{}-]+/g, " ") // syntaxe Markdown
+  return text.split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word)).length
+}
+
 export function computeReadingTime(content: string): number {
-  const words = content.trim().split(/\s+/).filter(Boolean).length
-  return Math.min(300, Math.max(1, Math.round(words / WORDS_PER_MINUTE)))
+  return Math.min(300, Math.max(1, Math.round(countWords(content) / WORDS_PER_MINUTE)))
 }
 
 /** Transforme un titre en slug ASCII (accents retirés). */

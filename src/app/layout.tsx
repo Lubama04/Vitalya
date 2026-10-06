@@ -63,7 +63,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Aller au contenu
         </a>
         <SiteHeader />
-        <main id="contenu" className="flex-1">
+        <main id="contenu" className="flex-1 overflow-x-clip">
           {children}
         </main>
         <SiteFooter />

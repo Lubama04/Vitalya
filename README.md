@@ -95,21 +95,54 @@ update public.profiles set role = 'admin' where email = 'personne@exemple.com';
 
 ## Rédiger un article
 
-Le contenu est en Markdown/MDX. Composants disponibles :
+L'éditeur du back-office (`/admin/articles/…`) propose :
 
-```mdx
-## Intertitre
+- **Barre rapide** (avec infobulles) : gras, italique, H2, H3, listes, lien externe, lien interne (sélecteur d'articles), image, YouTube ; raccourcis Ctrl+B / Ctrl+I / Ctrl+K, annulation Ctrl+Z préservée.
+- **Menu « + Insérer »** en 6 catégories : Texte, Information, Science, Média, Mise en page, Navigation.
+- **Vue split** : code à gauche, aperçu à droite, rendu **par le serveur avec le même moteur que le site** (aucun `eval` côté navigateur, compatible avec la CSP stricte).
+- **Statistiques en temps réel** : mots, temps de lecture, intertitres, composants. Le calcul est identique à celui du serveur à l'enregistrement.
+- **Plein écran** et 3 modes d'affichage (éditeur, split, aperçu).
+- **Uploads** vers le bucket public `article-media` : images (10 Mo max) et vidéos MP4/WebM (50 Mo max). Écriture réservée à l'équipe éditoriale.
 
-<Encart titre="Bon à savoir">
-Texte de l'encart, **gras** autorisé.
-</Encart>
+### Composants MDX disponibles
 
-<Citation auteur="Nom de l'expert">
-Une citation marquante.
-</Citation>
-```
+| Catégorie | Composant | Exemple |
+| --- | --- | --- |
+| Texte | `Chapeau` | `<Chapeau>Résumé en 2 à 4 phrases.</Chapeau>` |
+| | `Lettrine` | `<Lettrine>Premier paragraphe.</Lettrine>` |
+| | `Citation` | `<Citation auteur="…" fonction="…">…</Citation>` |
+| Information | `ARetenir` | `<ARetenir>` + liste Markdown + `</ARetenir>` |
+| | `Encart` (conseil) | `<Encart titre="Conseil Vitalya">…</Encart>` |
+| | `Avertissement` | `<Avertissement niveau="info\|conseil\|prudence\|attention\|urgence">…</Avertissement>` |
+| | `MythesRealites` | `<MythesRealites mythe="…" realite="…">explication</MythesRealites>` |
+| | `NiveauPreuve` | `<NiveauPreuve note={3}>explication</NiveauPreuve>` (sur 5) |
+| Science | `Source` | `<Source n="1" url="https://doi.org/…">Auteur, titre, revue, année.</Source>` |
+| | `Ref` | `<Ref n="1" />` (appel [1] renvoyant à la source) |
+| | `AvisExpert` | `<AvisExpert nom="…" profession="…" institution="…" photo="…">…</AvisExpert>` |
+| Média | `Figure` / `Infographie` | `<Figure src="…" alt="…" legende="…" credit="…" taille="normal\|large\|pleine" />` |
+| | `Galerie` | `<Galerie images={[{"src":"…","alt":"…"}]} legende="…" />` |
+| | `AvantApres` | `<AvantApres avant="…" apres="…" legende="…" />` |
+| | `Video` | `<Video src="….mp4" poster="…" titre="…" />` |
+| | `YouTube` | `<YouTube videoId="dQw4w9WgXcQ" titre="…" />` (youtube-nocookie) |
+| Mise en page | `MediaText` | `<MediaText src="…" alt="…" variante="image-texte\|texte-image\|image-dessous\|image-fond">texte</MediaText>` |
+| | `HeroSection` | `<HeroSection src="…" titre="…" sousTitre="…" />` |
+| | `Separateur` | `<Separateur style="1\|2\|3" />` |
+| | `Encadre` | `<Encadre titre="…" couleur="creme\|vert\|nuit\|or">…</Encadre>` (pleine largeur) |
+| Navigation | `Sommaire` | `<Sommaire />` (généré depuis les H2/H3, avec ancres) |
+| | `ALireSuite` | `<ALireSuite />` (3 articles liés automatiquement) |
+| | `BoutonCTA` | `<BoutonCTA href="/abonnement" texte="…" variante="vert\|secondaire" />` |
 
-Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne vide) aux lecteurs non abonnés : soignez l'accroche.
+### Sécurité du contenu (liste blanche stricte)
+
+Un plugin remark ([`src/components/mdx/mdx-content.tsx`](src/components/mdx/mdx-content.tsx)) s'exécute **avant** la compilation :
+
+- seuls les composants et attributs listés dans `MDX_ALLOWLIST` sont conservés ; tout autre élément est supprimé (`<script>`, `<iframe>`, `<div>`, `<img onError>`) ;
+- les attributs `{…}` ne sont jamais exécutés : seules les valeurs littérales JSON sont acceptées (`note={3}`, `images={[…]}`), converties en chaînes ;
+- les imports/exports, expressions `{…}` et attributs « spread » sont retirés ; `blockJS` de next-mdx-remote reste actif en seconde barrière ;
+- les médias ne sont affichés que s'ils proviennent du stockage Vitalya (`article-media`, `covers`) ou de `/covers` ; les liens sont limités à http(s), mailto, chemins internes et ancres ;
+- un composant de bloc écrit au milieu d'une phrase est automatiquement sorti de son paragraphe (HTML toujours valide).
+
+Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne vide) aux lecteurs non abonnés : placez le `Chapeau` et l'accroche en tête.
 
 ## Mise en service des intégrations
 
