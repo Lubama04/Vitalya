@@ -57,7 +57,9 @@ export async function saveArticle(_prev: ActionState, formData: FormData): Promi
     title: formData.get("title"),
     subtitle: formData.get("subtitle") || undefined,
     slug: formData.get("slug"),
-    content: formData.get("content") ?? "",
+    // Les formulaires envoient des fins de ligne CRLF : on normalise en LF
+    // (le découpage de l'aperçu du paywall repose sur les lignes vides).
+    content: String(formData.get("content") ?? "").replace(/\r\n?/g, "\n"),
     coverImage: formData.get("coverImage") ?? "",
     category: formData.get("category") ?? "",
     accessLevel: formData.get("accessLevel"),
