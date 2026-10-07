@@ -217,6 +217,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          reading_mode: string
           role: string
           subscription_tier: string
           updated_at: string
@@ -227,6 +228,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          reading_mode?: string
           role?: string
           subscription_tier?: string
           updated_at?: string
@@ -237,11 +239,33 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          reading_mode?: string
           role?: string
           subscription_tier?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      reading_positions: {
+        Row: { article_id: string; mode: string; page: number | null; progress: number; updated_at: string; user_id: string }
+        Insert: { article_id: string; mode?: string; page?: number | null; progress?: number; updated_at?: string; user_id: string }
+        Update: { article_id?: string; mode?: string; page?: number | null; progress?: number; updated_at?: string; user_id?: string }
+        Relationships: [
+          {
+            foreignKeyName: "reading_positions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reading_positions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: { auth: string; created_at: string; endpoint: string; id: string; p256dh: string; user_id: string }

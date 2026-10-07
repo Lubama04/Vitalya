@@ -11,8 +11,9 @@ import { MdxContent } from "@/components/mdx/mdx-content"
 import { Paywall } from "@/components/article/paywall"
 import { ShareButton } from "@/components/article/share-button"
 import { ViewTracker } from "@/components/article/view-tracker"
+import { ArticleReader } from "@/components/reader/article-reader"
 import { getViewer, isStaff } from "@/lib/auth"
-import { formatDate, SITE, textOn } from "@/lib/constants"
+import { accentOnWhite, formatDate, SITE, textOn } from "@/lib/constants"
 import { getArticleBySlug, getLatestArticles } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 
@@ -133,34 +134,46 @@ export default async function ArticlePage({ params }: Props) {
         </div>
       </header>
 
-      {/* ─── Contenu ─── */}
-      <div className="mx-auto max-w-3xl px-4 pt-12 sm:px-6">
-        <div className="prose-vitalya">
-          <MdxContent source={article.content} context={{ articleId: article.id, categoryId: article.category?.id }} />
-        </div>
-
-        {!article.hasAccess && (
-          <div className="mt-8">
-            <Paywall level={article.accessLevel} isAuthenticated={Boolean(viewer)} />
-          </div>
-        )}
-
-        <div className="mt-12 flex flex-wrap items-center gap-3 border-y py-6">
-          <LikeButton
-            articleId={article.id}
-            initial={{ liked: stats?.liked_by_me ?? false, count: stats?.likes_count ?? 0 }}
-            isAuthenticated={Boolean(viewer)}
-          />
-          <ShareButton title={article.title} />
-          <p className="ml-auto font-heading text-sm text-muted-foreground italic">Vivre mieux, naturellement.</p>
-        </div>
-
-        <Comments
+      {/* ─── Contenu : lecteur configurable (défilement | livre) ─── */}
+      <div className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
+        <ArticleReader
           articleId={article.id}
-          initialComments={comments ?? []}
-          viewerId={viewer?.id ?? null}
-          canModerate={isStaff(viewer)}
-        />
+          userId={viewer?.id ?? null}
+          initialMode={viewer?.readingMode ?? null}
+          meta={{
+            title: article.title,
+            subtitle: article.subtitle,
+            category: article.category?.name ?? null,
+            categoryColor: article.category ? accentOnWhite(article.category.color) : null,
+            readingTime: article.readingTime,
+            coverImage: article.coverImage,
+          }}
+          endSlot={
+            !article.hasAccess ? <Paywall level={article.accessLevel} isAuthenticated={Boolean(viewer)} /> : undefined
+          }
+          footer={
+            <>
+              <div className="mt-12 flex flex-wrap items-center gap-3 border-y py-6">
+                <LikeButton
+                  articleId={article.id}
+                  initial={{ liked: stats?.liked_by_me ?? false, count: stats?.likes_count ?? 0 }}
+                  isAuthenticated={Boolean(viewer)}
+                />
+                <ShareButton title={article.title} />
+                <p className="ml-auto font-heading text-sm text-muted-foreground italic">Vivre mieux, naturellement.</p>
+              </div>
+
+              <Comments
+                articleId={article.id}
+                initialComments={comments ?? []}
+                viewerId={viewer?.id ?? null}
+                canModerate={isStaff(viewer)}
+              />
+            </>
+          }
+        >
+          <MdxContent source={article.content} context={{ articleId: article.id, categoryId: article.category?.id }} />
+        </ArticleReader>
       </div>
 
       {/* ─── Articles similaires ─── */}

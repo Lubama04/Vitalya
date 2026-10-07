@@ -63,3 +63,18 @@ export async function deletePushSubscription(endpoint: string): Promise<{ ok: bo
   const { error } = await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint)
   return { ok: !error }
 }
+
+/** Mode de lecture préféré (colonne reading_mode, modifiable par le lecteur). */
+export async function setReadingMode(mode: unknown): Promise<{ ok: boolean }> {
+  const parsed = z.enum(["scroll", "book"]).safeParse(mode)
+  if (!parsed.success) return { ok: false }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+
+  const { error } = await supabase.from("profiles").update({ reading_mode: parsed.data }).eq("id", user.id)
+  return { ok: !error }
+}

@@ -147,3 +147,70 @@
     @apply my-10 border-border;
   }
 }
+
+/* ═══ Lecteur — mode livre ═══ */
+/* Jamais de coupure au milieu d'un paragraphe ou d'un bloc ; un intertitre
+   n'est jamais laissé seul en bas de page. */
+.livre-pages p,
+.livre-pages li,
+.livre-pages figure,
+.livre-pages aside,
+.livre-pages blockquote,
+.livre-pages section,
+.livre-pages table,
+.livre-pages pre,
+.livre-pages img,
+.livre-pages video,
+.livre-pages .source,
+.livre-pages .lettrine,
+.livre-pages .chapeau {
+  break-inside: avoid;
+}
+.livre-pages h2,
+.livre-pages h3 {
+  break-after: avoid;
+  margin-top: 1.5rem;
+}
+.livre-titre {
+  break-after: column;
+}
+.livre-fin {
+  break-before: column;
+}
+/* Médias limités à la hauteur d'une page */
+.livre-pages img,
+.livre-pages video,
+.livre-pages iframe {
+  max-height: 55dvh;
+  object-fit: contain;
+}
+.livre-pages .aspect-video {
+  max-height: 55dvh;
+}
+
+@keyframes livre-flip-next {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-180deg); }
+}
+@keyframes livre-flip-prev {
+  from { transform: rotateY(-180deg); }
+  to { transform: rotateY(0deg); }
+}
+@keyframes livre-ombre {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+.livre-flip-next {
+  animation: livre-flip-next 300ms ease forwards;
+}
+.livre-flip-prev {
+  animation: livre-flip-prev 300ms ease forwards;
+}
+.livre-ombre {
+  background: linear-gradient(to left, rgba(30, 37, 50, 0.18), transparent 60%);
+  opacity: 0;
+}
+.livre-flip-next .livre-ombre,
+.livre-flip-prev .livre-ombre {
+  animation: livre-ombre 300ms ease;
+}

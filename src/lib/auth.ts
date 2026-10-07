@@ -2,7 +2,7 @@ import "server-only"
 import { cache } from "react"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { isAccessLevel, isRole, type AccessLevel, type Role } from "@/lib/constants"
+import { isAccessLevel, isReadingMode, isRole, type AccessLevel, type ReadingMode, type Role } from "@/lib/constants"
 
 export type Viewer = {
   id: string
@@ -11,6 +11,7 @@ export type Viewer = {
   avatarUrl: string | null
   tier: AccessLevel
   role: Role
+  readingMode: ReadingMode
   createdAt: string
 }
 
@@ -27,7 +28,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, email, full_name, avatar_url, subscription_tier, role, created_at")
+    .select("id, email, full_name, avatar_url, subscription_tier, role, reading_mode, created_at")
     .eq("id", user.id)
     .maybeSingle()
 
@@ -40,6 +41,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     avatarUrl: profile.avatar_url,
     tier: isAccessLevel(profile.subscription_tier) ? profile.subscription_tier : "free",
     role: isRole(profile.role) ? profile.role : "reader",
+    readingMode: isReadingMode(profile.reading_mode) ? profile.reading_mode : "scroll",
     createdAt: profile.created_at,
   }
 })

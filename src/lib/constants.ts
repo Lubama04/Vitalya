@@ -15,6 +15,13 @@ export type AccessLevel = (typeof ACCESS_LEVELS)[number]
 export const ROLES = ["reader", "editor", "admin"] as const
 export type Role = (typeof ROLES)[number]
 
+export const READING_MODES = ["scroll", "book"] as const
+export type ReadingMode = (typeof READING_MODES)[number]
+
+export function isReadingMode(value: unknown): value is ReadingMode {
+  return value === "scroll" || value === "book"
+}
+
 export const ACCESS_LABELS: Record<AccessLevel, string> = {
   free: "Gratuit",
   premium: "Premium",
