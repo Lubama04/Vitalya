@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Playfair_Display } from "next/font/google"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
+import { InstallBanner } from "@/components/pwa/install-banner"
+import { INSTALL_CAPTURE_SCRIPT } from "@/components/pwa/install-capture"
 import { Toaster } from "@/components/ui/sonner"
 import { SITE } from "@/lib/constants"
 import { siteUrl } from "@/lib/env"
@@ -55,6 +57,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
+      <head>
+        {/* Capture de l'invite d'installation PWA avant l'hydratation */}
+        <script dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE_SCRIPT }} />
+      </head>
       <body className="flex min-h-dvh flex-col">
         <a
           href="#contenu"
@@ -68,6 +74,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         </main>
         <SiteFooter />
         <Toaster position="top-center" richColors />
+        <InstallBanner />
       </body>
     </html>
   )
