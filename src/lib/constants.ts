@@ -76,7 +76,7 @@ export const PRICING: PricingTier[] = [
     id: "premium",
     name: "Premium",
     price: 5,
-    priceFcfa: 3300,
+    priceFcfa: 2950,
     description: "Pour aller plus loin dans votre routine santé et beauté.",
     features: [
       "Tout le contenu Gratuit",
@@ -91,7 +91,7 @@ export const PRICING: PricingTier[] = [
     id: "expert",
     name: "Expert",
     price: 10,
-    priceFcfa: 6600,
+    priceFcfa: 5900,
     description: "L'accès intégral, avec l'éclairage de nos spécialistes.",
     features: [
       "Tout le contenu Premium",

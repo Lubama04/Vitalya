@@ -189,3 +189,30 @@ export function paymentConfirmationHtml(options: {
     footerHtml: `Email transactionnel lié à votre abonnement Vitalya. <a href="${siteUrl}/profil" style="color:#FFFFFF">Mon compte</a>`,
   })
 }
+
+/** Bienvenue à un nouvel abonné payant (premier abonnement confirmé). */
+export function paidWelcomeEmailHtml(options: { siteUrl: string; name: string | null; tier: string }): string {
+  const { siteUrl, name, tier } = options
+  const expert = tier === "Expert"
+  return emailLayout({
+    siteUrl,
+    title: `Bienvenue dans Vitalya ${tier}`,
+    preheader: "Tout le magazine vous est désormais ouvert.",
+    contentHtml: [
+      paragraph(name ? `Bonjour ${name},` : "Bonjour,"),
+      paragraph(
+        `Merci de soutenir un média indépendant dédié à la santé, à la beauté et au bien-être africains. Votre formule ${tier} est active.`,
+      ),
+      `<p style="margin:0 0 16px;line-height:1.7"><strong>Ce qui vous attend :</strong></p>`,
+      `<ul style="margin:0 0 16px;padding-left:20px;line-height:1.8">
+        <li>Tous les articles Premium et nos dossiers thématiques complets</li>
+        ${expert ? "<li>Les articles Expert &amp; Science et les analyses de nos spécialistes</li>" : ""}
+        <li>La lecture hors ligne dans l'application installée</li>
+        <li>Une alerte email à chaque nouvel article (à activer dans votre profil)</li>
+      </ul>`,
+      paragraph("Votre accès dure un mois ; vous pourrez le prolonger à tout moment depuis la page Abonnement."),
+    ].join("\n"),
+    cta: { label: "Commencer la lecture", href: `${siteUrl}/articles` },
+    footerHtml: `Email lié à votre abonnement Vitalya. <a href="${siteUrl}/profil" style="color:#FFFFFF">Mon compte</a>`,
+  })
+}

@@ -18,7 +18,7 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | Données | Supabase : Postgres + RLS, Auth, Storage, Realtime |
 | Contenu | MDX (`next-mdx-remote`, JavaScript bloqué + liste blanche de composants) |
 | Emails | Resend : newsletter ciblée, bienvenue, alertes nouveaux articles, confirmations de paiement |
-| Paiement | **PawaPay** (Mobile Money Tchad / Cameroun, API v2 Checkout) et **MoneyFusion** (carte, Wave, Mobile Money UEMOA) ; Stripe préparé, non activé |
+| Paiement | Edge Functions Supabase `create-payment` / `confirm-payment` : **PawaPay** (Mobile Money, API v2 Checkout) avec **bascule automatique** sur **MoneyFusion** (carte, Wave, Mobile Money Afrique de l'Ouest) ; Stripe préparé, non activé |
 | PWA | `@ducanh2912/next-pwa` (Workbox) : manifeste, cache hors ligne, push préparé |
 | Hébergement | Vercel |
 
@@ -30,8 +30,9 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | `/articles` | Tous les articles (pagination) |
 | `/articles/[slug]` | Article : couverture pleine largeur, MDX, **paywall**, j'aime, commentaires en temps réel, articles similaires, JSON-LD `Article`, image Open Graph générée (`opengraph-image`) |
 | `/categories/[slug]` | Articles d'une rubrique |
-| `/abonnement` | Offres Gratuit / Premium 3 300 FCFA / Expert 6 600 FCFA, choix du moyen de paiement (PawaPay ou MoneyFusion), FAQ |
-| `/abonnement/retour` | Retour après paiement : vérification auprès du prestataire, état en direct (confirmé / en attente / échoué) |
+| `/abonnement` | Offres Gratuit / Premium 5 € (2 950 FCFA) / Expert 10 € (5 900 FCFA), modale de paiement (Mobile Money ou carte bancaire), FAQ |
+| `/abonnement/confirmation` | Retour après paiement : vérification auprès du prestataire, succès (redirection vers `/profil`), échec (réessayer) ou attente (relecture toutes les 5 s). `/abonnement/retour` y redirige |
+| `/abonnement/erreur` | Paiement non abouti, bouton Réessayer |
 | `/auth` | Connexion, inscription, mot de passe oublié (`/auth/callback` pour les liens email) |
 | `/profil` | Espace abonné : formule et moyen de paiement, informations, mot de passe, notifications push, alerte email nouveaux articles, articles aimés |
 | `/admin` | Back-office : statistiques, articles (création/édition/publication, import de couverture), abonnés (formule et rôle), auteurs, newsletter ciblée (tous / gratuits / premium / expert) |
@@ -70,8 +71,11 @@ Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 | `20261008130000_vote_accepte.sql` | retour « vote accepté » |
 | `20261009090000_paiements_notifications.sql` | colonnes de paiement mobile, `create_payment`, `confirm_payment`, niveau effectif `current_tier`, préférences d'alerte |
 | `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
+| `20261009150000_paiements_fallback.sql` | table `payment_logs`, montants 2 950 / 5 900 FCFA, période d'un mois, détection du premier abonnement |
 
-Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`.
+Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`, `payment_logs`.
+
+Edge Functions : [`supabase/functions`](supabase/functions) (`create-payment`, `confirm-payment`, déployées avec `verify_jwt` désactivé : authentification faite dans le code).
 
 Types TypeScript : [`src/types/database.ts`](src/types/database.ts) (régénérer avec `npx supabase gen types typescript --project-id cocheygwpsdbtxegdkzf`).
 
@@ -80,10 +84,10 @@ Types TypeScript : [`src/types/database.ts`](src/types/database.ts) (régénére
 | Niveau | Rang | Accès |
 | --- | --- | --- |
 | `free` | 0 | articles gratuits |
-| `premium` | 1 | gratuits + premium (3 300 FCFA / 30 jours) |
-| `expert` | 2 | tout le magazine (6 600 FCFA / 30 jours) |
+| `premium` | 1 | gratuits + premium (5 €, 2 950 FCFA / mois) |
+| `expert` | 2 | tout le magazine (10 €, 5 900 FCFA / mois) |
 
-Le **niveau effectif** (`current_tier()`) est le plus élevé entre `profiles.subscription_tier` (attribué par un administrateur ou Stripe) et les abonnements `active` non expirés de la table `subscriptions` (paiements mobiles). Chaque paiement confirmé ouvre 30 jours, ajoutés à la suite d'une période encore en cours. Les montants sont fixés en base (`subscription_price`), jamais par le navigateur.
+Le **niveau effectif** (`current_tier()`) est le plus élevé entre `profiles.subscription_tier` (attribué par un administrateur ou Stripe) et les abonnements `active` non expirés de la table `subscriptions` (paiements mobiles). Chaque paiement confirmé ouvre un mois, ajouté à la suite d'une période encore en cours. Les montants sont fixés en base (`subscription_price`), jamais par le navigateur.
 
 ### Rôles
 
@@ -103,7 +107,7 @@ update public.profiles set role = 'admin' where email = 'personne@exemple.com';
 - Server Actions : authentification revérifiée (`getUser()`), validation **Zod**, messages d'erreur génériques, protection contre les redirections ouvertes.
 - En-têtes : CSP stricte (sources limitées au site + Supabase), HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `poweredByHeader: false`.
 - Service worker : pages privées (`/admin`, `/profil`, `/auth`, `/api`) et API Supabase **jamais mises en cache**.
-- **Paiements mobiles** : le paiement est créé en base par le lecteur connecté (`create_payment` : montant fixé côté serveur, 10 tentatives par heure au maximum). L'activation passe **uniquement** par `confirm_payment`, protégée par un secret partagé (`PAYMENT_WEBHOOK_SECRET`, seule son empreinte SHA-256 est stockée dans `app_secrets`). Webhooks et page de retour ne croient jamais le contenu reçu : l'état et le montant sont **relus auprès de l'API du prestataire** ; montant insuffisant refusé ; confirmation idempotente (un seul email, une seule prolongation).
+- **Paiements** : l'Edge Function `create-payment` authentifie le lecteur (jeton de session), crée le paiement en base (`create_payment` : montant fixé côté serveur, 10 tentatives par heure au maximum), tente PawaPay puis bascule silencieusement sur MoneyFusion (délai dépassé, erreur 5xx, opérateur fermé, refus) ; chaque tentative est journalisée dans `payment_logs` (lecture admin, tableau « Paiements récents » du back-office). Seules les adresses de retour des domaines Vitalya sont acceptées. L'activation passe **uniquement** par l'Edge Function `confirm-payment` puis la fonction SQL `confirm_payment`, protégée par un secret partagé (`PAYMENT_WEBHOOK_SECRET`, seule son empreinte SHA-256 est stockée dans `app_secrets`). Webhooks et page de retour ne croient jamais le contenu reçu : l'état et le montant sont **relus auprès de l'API du prestataire** ; montant insuffisant refusé ; confirmation idempotente (un seul email, une seule prolongation).
 - Webhook Stripe : signature vérifiée, upsert idempotent.
 - Newsletter : contenu échappé avant mise en forme, honeypot anti-robots à l'inscription, désinscription par jeton.
 - Aucun secret dans le code : tout passe par `.env.local` / variables Vercel.
@@ -168,13 +172,16 @@ Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne
 ### Resend
 Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` et `RESEND_FROM_EMAIL` sur Vercel. Tous les emails (newsletter, bienvenue, alerte nouvel article, confirmation de paiement) s'activent avec cette clé ; sans elle, ils sont simplement ignorés.
 
+### Edge Functions de paiement
+Secrets Supabase (*Edge Functions → Secrets*) : `PAWAPAY_API_KEY`, `PAWAPAY_BASE_URL`, `MONEYFUSION_API_URL`. Diagnostic sans secret : `GET https://<projet>.supabase.co/functions/v1/create-payment` renvoie les prestataires configurés.
+
 ### PawaPay (Mobile Money Tchad / Cameroun)
-1. Renseigner `PAWAPAY_API_KEY` (jeton du tableau de bord) et, en production, `PAWAPAY_BASE_URL=https://api.pawapay.io` (sandbox par défaut).
+1. `PAWAPAY_API_KEY` et `PAWAPAY_BASE_URL` (`https://api.pawapay.io` en production, sandbox par défaut) : secrets Edge Functions **et** variables Vercel (la liste des opérateurs est lue côté Next.js).
 2. Dans le tableau de bord PawaPay, section *Callbacks*, déclarer l'URL de callback des **checkouts** : `https://<domaine>/api/payments/pawapay/callback`.
 3. Les opérateurs proposés sont lus en direct (`/v2/active-conf`) pour `TCD` et `CMR` ; une liste de repli est intégrée si l'API ne répond pas.
 
 ### MoneyFusion (carte, Wave, UEMOA)
-Renseigner `MONEYFUSION_API_URL` (URL de création de paiement fournie dans votre tableau de bord MoneyFusion). Le webhook `https://<domaine>/api/payments/moneyfusion/webhook` est transmis à chaque paiement. `MONEYFUSION_TOKEN` est réservé (non requis par l'API publique actuelle).
+`MONEYFUSION_API_URL` (URL de création de paiement fournie par MoneyFusion) en secret Edge Functions. Le webhook `https://<domaine>/api/payments/moneyfusion/webhook` est transmis à chaque paiement. `MONEYFUSION_TOKEN` est réservé (non requis par l'API publique actuelle).
 
 ### Secret de confirmation des paiements
 `PAYMENT_WEBHOOK_SECRET` (au moins 32 caractères aléatoires) doit être identique sur Vercel et dans `app_secrets` (empreinte) :
@@ -200,6 +207,7 @@ Générer des clés VAPID (`npx web-push generate-vapid-keys`) → `NEXT_PUBLIC_
 - JavaScript : supabase-js et le menu compte chargés à la demande ; lecteur livre, partage de passage et composants MDX interactifs en import dynamique ; `optimizePackageImports` pour `radix-ui` ; aucun `zod` dans le bundle client. First Load JS : accueil 130 kB, article 246 kB.
 - Rendu : accueil en ISR (5 min), en-tête sans lecture de cookies côté serveur, middleware court-circuité pour les visiteurs anonymes.
 - SEO : `sitemap.xml` dynamique, `robots.txt`, métadonnées Open Graph / Twitter par article, image de partage générée (titre, rubrique, couverture), JSON-LD `Article` (auteur, dates, éditeur, logo).
+- Emails Resend : bienvenue à l'inscription, confirmation de paiement, bienvenue au premier abonnement payant, alerte nouvel article, newsletter ciblée.
 
 ## Structure
 

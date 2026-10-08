@@ -36,8 +36,7 @@ export const features = {
       serverEnv.STRIPE_PRICE_EXPERT &&
       serverEnv.SUPABASE_SERVICE_ROLE_KEY,
   ),
-  // Mobile Money (Tchad, Cameroun) via la page de paiement PawaPay
-  pawapay: Boolean(serverEnv.PAWAPAY_API_KEY && serverEnv.PAYMENT_WEBHOOK_SECRET),
-  // Carte bancaire / Wave / Mobile Money UEMOA via MoneyFusion
-  moneyfusion: Boolean(serverEnv.MONEYFUSION_API_URL && serverEnv.PAYMENT_WEBHOOK_SECRET),
+  // Paiements (PawaPay → MoneyFusion) via les Edge Functions Supabase ; le secret partagé
+  // authentifie le serveur auprès de confirm-payment
+  payments: Boolean(serverEnv.PAYMENT_WEBHOOK_SECRET),
 } as const

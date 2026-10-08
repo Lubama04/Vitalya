@@ -1,17 +1,17 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Check, Crown, Gem, Leaf, ShieldCheck, Smartphone } from "lucide-react"
+import { PaymentBadges } from "@/components/payment-badges"
 import { PaymentDialog } from "@/components/payment-dialog"
 import { Button } from "@/components/ui/button"
 import { getViewer } from "@/lib/auth"
 import { ACCESS_LABELS, formatFcfa, PRICING, tierRank } from "@/lib/constants"
-import { features } from "@/lib/env.server"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Abonnements",
   description:
-    "Gratuit, Premium à 3 300 FCFA ou Expert à 6 600 FCFA par mois, payable par Mobile Money, Wave ou carte bancaire : choisissez votre formule Vitalya.",
+    "Gratuit, Premium à 5 € (2 950 FCFA) ou Expert à 10 € (5 900 FCFA) par mois, payable par Mobile Money, Wave ou carte bancaire : choisissez votre formule Vitalya.",
 }
 
 const ICONS = { free: Leaf, premium: Crown, expert: Gem } as const
@@ -23,7 +23,7 @@ const FAQ = [
   },
   {
     q: "Mon abonnement se renouvelle-t-il automatiquement ?",
-    a: "Non. Chaque paiement ouvre 30 jours d'accès. Avant l'échéance, il suffit de payer à nouveau depuis cette page : les jours restants sont conservés et la nouvelle période s'ajoute à la suite.",
+    a: "Non. Chaque paiement ouvre un mois d'accès. Avant l'échéance, il suffit de payer à nouveau depuis cette page : les jours restants sont conservés et la nouvelle période s'ajoute à la suite.",
   },
   {
     q: "Comment se déroule un paiement Mobile Money ?",
@@ -37,7 +37,6 @@ const FAQ = [
 
 export default async function PricingPage() {
   const viewer = await getViewer()
-  const available = { pawapay: features.pawapay, moneyfusion: features.moneyfusion }
   const currentRank = viewer ? tierRank(viewer.tier) : -1
 
   return (
@@ -52,8 +51,7 @@ export default async function PricingPage() {
           et à la beauté africaines.
         </p>
         <p className="mx-auto mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-vert-pale px-4 py-2 text-sm font-medium text-vert-fonce">
-          <ShieldCheck className="size-4" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion
-          <span className="text-vert-fonce/80">· Mobile Money, Wave, carte bancaire</span>
+          <ShieldCheck className="size-4" aria-hidden /> Paiement sécurisé : Orange Money, Airtel, MTN, Wave, Visa, Mastercard
         </p>
       </section>
 
@@ -87,11 +85,10 @@ export default async function PricingPage() {
                 <h2 className="text-2xl font-bold">{tier.name}</h2>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
-              <p className="mt-6 font-heading text-4xl font-bold text-nuit sm:text-5xl">
-                {tier.priceFcfa === 0 ? "0 FCFA" : formatFcfa(tier.priceFcfa)}
-                <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
+              <p className="mt-6 font-heading text-5xl font-bold text-nuit">
+                {tier.price} €<span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
               </p>
-              {tier.price > 0 && <p className="mt-1 text-sm text-muted-foreground">soit environ {tier.price} €</p>}
+              {tier.priceFcfa > 0 && <p className="mt-1 text-sm text-muted-foreground">soit {formatFcfa(tier.priceFcfa)}</p>}
               <ul className="mt-8 flex-1 space-y-3">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex gap-3 text-sm">
@@ -110,11 +107,10 @@ export default async function PricingPage() {
                       <PaymentDialog
                         tier={tier.id === "expert" ? "expert" : "premium"}
                         tierName={tier.name}
-                        priceFcfa={tier.priceFcfa}
-                        label="Prolonger de 30 jours"
+                        priceEur={tier.price}
+                    priceFcfa={tier.priceFcfa}
+                        label="Prolonger d'un mois"
                         isAuthenticated
-                        defaultName={viewer?.fullName ?? ""}
-                        available={available}
                       />
                     )}
                   </div>
@@ -122,11 +118,10 @@ export default async function PricingPage() {
                   <PaymentDialog
                     tier={tier.id === "expert" ? "expert" : "premium"}
                     tierName={tier.name}
+                    priceEur={tier.price}
                     priceFcfa={tier.priceFcfa}
                     label="Prolonger ou reprendre"
                     isAuthenticated
-                    defaultName={viewer?.fullName ?? ""}
-                    available={available}
                   />
                 ) : isIncluded ? (
                   <p className="rounded-xl bg-muted py-3 text-center text-sm text-muted-foreground">
@@ -140,14 +135,14 @@ export default async function PricingPage() {
                   <PaymentDialog
                     tier={tier.id === "expert" ? "expert" : "premium"}
                     tierName={tier.name}
+                    priceEur={tier.price}
                     priceFcfa={tier.priceFcfa}
                     label={`Choisir ${tier.name}`}
                     highlighted={tier.highlighted}
                     isAuthenticated={Boolean(viewer)}
-                    defaultName={viewer?.fullName ?? ""}
-                    available={available}
                   />
                 )}
+                {tier.id !== "free" && <PaymentBadges className="mt-4 justify-center" />}
               </div>
             </article>
           )
@@ -170,7 +165,7 @@ export default async function PricingPage() {
           ))}
         </div>
         <p className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Smartphone className="size-4 text-vert-emeraude" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion · Sans engagement
+          <Smartphone className="size-4 text-vert-emeraude" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion · Sans engagement · Sans renouvellement automatique
         </p>
       </section>
     </div>

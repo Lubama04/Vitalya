@@ -16,7 +16,7 @@ type CallbackBody = {
 }
 
 export async function POST(request: NextRequest) {
-  if (!features.pawapay) return NextResponse.json({ received: false }, { status: 503 })
+  if (!features.payments) return NextResponse.json({ received: false }, { status: 503 })
 
   const body = (await request.json().catch(() => null)) as CallbackBody | null
   const reference = [body?.checkoutId, body?.data?.checkoutId, body?.clientReferenceId, body?.data?.clientReferenceId].find(

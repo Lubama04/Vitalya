@@ -1,8 +1,9 @@
 import "server-only"
 import { serverEnv } from "@/lib/env.server"
 
-// Client PawaPay API v2 (page de paiement hébergée « Checkout »).
-// Documentation : https://docs.pawapay.io/v2/docs/checkouts
+// PawaPay API v2 côté Next.js : liste des opérateurs ouverts (/v2/active-conf).
+// L'ouverture et la vérification des paiements sont faites par les Edge Functions Supabase
+// create-payment et confirm-payment. Documentation : https://docs.pawapay.io/v2/docs/checkouts
 
 /** Pays desservis : Tchad et Cameroun (franc CFA BEAC, sans décimales). */
 export const PAWAPAY_COUNTRIES = {
@@ -68,90 +69,6 @@ export async function getPawapayProviders(country: PawapayCountry): Promise<Pawa
   } catch (error) {
     console.error("getPawapayProviders", error instanceof Error ? error.message : error)
     return []
-  }
-}
-
-export type CreateCheckoutResult =
-  | { ok: true; redirectUrl: string }
-  | { ok: false; code: string; message: string }
-
-/** Ouvre une page de paiement PawaPay (checkoutId = identifiant de notre paiement). */
-export async function createPawapayCheckout(input: {
-  checkoutId: string
-  country: PawapayCountry
-  amount: number
-  phoneNumber: string
-  provider: string
-  returnUrl: string
-}): Promise<CreateCheckoutResult> {
-  const { checkoutId, country, amount, phoneNumber, provider, returnUrl } = input
-  const currency = PAWAPAY_COUNTRIES[country].currency
-  try {
-    const response = await pawapayFetch("/v2/checkouts", {
-      method: "POST",
-      body: JSON.stringify({
-        checkoutId,
-        returnUrl,
-        returnMethod: "COUNTDOWN",
-        defaultLanguage: "fr",
-        countries: [country],
-        expiresAfter: 30,
-        amounts: [{ country, currency, amount: String(amount) }],
-        payer: { type: "MMO", accountDetails: { phoneNumber, provider, allowCustomerToOverride: true } },
-        clientReferenceId: checkoutId,
-        // 4 à 22 caractères, lettres, chiffres et espaces
-        reason: { fr: "Abonnement Vitalya", en: "Vitalya subscription" },
-      }),
-    })
-    const body = (await response.json().catch(() => null)) as {
-      status?: string
-      redirectUrl?: string
-      failureReason?: { failureCode?: string; failureMessage?: string }
-    } | null
-
-    if (response.ok && (body?.status === "ACCEPTED" || body?.status === "DUPLICATE_IGNORED") && body.redirectUrl) {
-      return { ok: true, redirectUrl: body.redirectUrl }
-    }
-    return {
-      ok: false,
-      code: body?.failureReason?.failureCode ?? `HTTP_${response.status}`,
-      message: body?.failureReason?.failureMessage ?? "Paiement refusé par PawaPay",
-    }
-  } catch (error) {
-    return { ok: false, code: "NETWORK", message: error instanceof Error ? error.message : "Erreur réseau" }
-  }
-}
-
-export type CheckoutStatus = {
-  status: "WAITING_PAYMENT" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELLED" | "NOT_FOUND" | "UNKNOWN"
-  /** Montant effectivement encaissé (dépôt réussi), en unités entières */
-  paidAmount: number | null
-  currency: string | null
-}
-
-/** État officiel d'une page de paiement, lu directement auprès de PawaPay. */
-export async function getPawapayCheckout(checkoutId: string): Promise<CheckoutStatus | null> {
-  try {
-    const response = await pawapayFetch(`/v2/checkouts/${encodeURIComponent(checkoutId)}`)
-    if (response.status === 404) return { status: "NOT_FOUND", paidAmount: null, currency: null }
-    if (!response.ok) {
-      console.error("getPawapayCheckout HTTP", response.status)
-      return null
-    }
-    const body = (await response.json()) as {
-      status?: string
-      data?: { status?: string; deposit?: { status?: string; amount?: string; currency?: string } }
-    }
-    if (body.status === "NOT_FOUND") return { status: "NOT_FOUND", paidAmount: null, currency: null }
-    if (body.status !== "FOUND" || !body.data) return null
-    const known = ["WAITING_PAYMENT", "PROCESSING", "COMPLETED", "FAILED", "EXPIRED", "CANCELLED"] as const
-    const status = known.find((value) => value === body.data?.status) ?? "UNKNOWN"
-    const deposit = body.data.deposit
-    const paidAmount = deposit?.status === "COMPLETED" && deposit.amount ? Math.floor(Number(deposit.amount)) : null
-    return { status, paidAmount: Number.isFinite(paidAmount) ? paidAmount : null, currency: deposit?.currency ?? null }
-  } catch (error) {
-    console.error("getPawapayCheckout", error instanceof Error ? error.message : error)
-    return null
   }
 }
 

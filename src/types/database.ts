@@ -255,6 +255,45 @@ export type Database = {
           },
         ]
       }
+      payment_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          payment_id: string | null
+          amount: number | null
+          currency: string | null
+          provider_attempted: string
+          provider_used: string | null
+          status: string
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          payment_id?: string | null
+          amount?: number | null
+          currency?: string | null
+          provider_attempted: string
+          provider_used?: string | null
+          status: string
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          payment_id?: string | null
+          amount?: number | null
+          currency?: string | null
+          provider_attempted?: string
+          provider_used?: string | null
+          status?: string
+          error_message?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -412,6 +451,7 @@ export type Database = {
         Args: { p_paid_amount: number; p_provider: string; p_reference: string; p_secret: string; p_status: string }
         Returns: {
           newly_activated: boolean
+          first_subscription: boolean
           payment_id: string
           period_end: string | null
           tier: string

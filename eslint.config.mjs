@@ -18,6 +18,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Edge Functions Supabase (Deno), vérifiées par le runtime Deno
+      "supabase/functions/**",
     ],
   },
 ];

@@ -1,0 +1,145 @@
+// Edge Function « confirm-payment » : vérifie l'état d'un paiement AUPRÈS DU PRESTATAIRE
+// puis active l'abonnement (fonction SQL confirm_payment : idempotente, montant contrôlé,
+// prolongation d'un mois à la suite d'une période en cours).
+//
+// Appelée uniquement par le serveur Vitalya (webhooks, page de confirmation) avec l'en-tête
+// x-payment-secret, comparé à l'empreinte SHA-256 stockée dans public.app_secrets.
+// Le contenu des notifications des prestataires n'est jamais cru sur parole.
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from "jsr:@supabase/supabase-js@2"
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? ""
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+const PAWAPAY_API_KEY = Deno.env.get("PAWAPAY_API_KEY") ?? ""
+const PAWAPAY_BASE_URL = (Deno.env.get("PAWAPAY_BASE_URL") || "https://api.sandbox.pawapay.io").replace(/\/+$/, "")
+const MONEYFUSION_STATUS_URL = "https://pay.moneyfusion.net/paiementNotif"
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const MF_TOKEN = /^[A-Za-z0-9_-]{6,200}$/
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } })
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")
+}
+
+type Verified = { status: "paid" | "failed" | "pending" | "unknown"; paidAmount: number | null } | null
+
+async function verifyPawapay(checkoutId: string): Promise<Verified> {
+  const response = await fetch(`${PAWAPAY_BASE_URL}/v2/checkouts/${encodeURIComponent(checkoutId)}`, {
+    headers: { Authorization: `Bearer ${PAWAPAY_API_KEY}` },
+    signal: AbortSignal.timeout(12000),
+  })
+  if (response.status === 404) return { status: "unknown", paidAmount: null }
+  if (!response.ok) return null
+  const body = (await response.json()) as {
+    status?: string
+    data?: { status?: string; deposit?: { status?: string; amount?: string; currency?: string } }
+  }
+  if (body.status === "NOT_FOUND") return { status: "unknown", paidAmount: null }
+  if (body.status !== "FOUND" || !body.data) return null
+  const state = body.data.status
+  if (state === "COMPLETED") {
+    const deposit = body.data.deposit
+    const amount = deposit?.status === "COMPLETED" && deposit.currency === "XAF" ? Math.floor(Number(deposit.amount)) : NaN
+    return { status: "paid", paidAmount: Number.isFinite(amount) ? amount : null }
+  }
+  if (state === "FAILED" || state === "EXPIRED" || state === "CANCELLED") return { status: "failed", paidAmount: null }
+  return { status: "pending", paidAmount: null }
+}
+
+async function verifyMoneyFusion(token: string): Promise<Verified> {
+  const response = await fetch(`${MONEYFUSION_STATUS_URL}/${encodeURIComponent(token)}`, { signal: AbortSignal.timeout(12000) })
+  if (response.status === 404) return { status: "unknown", paidAmount: null }
+  if (!response.ok) return null
+  const body = (await response.json()) as { statut?: boolean; data?: { statut?: string; Montant?: number | string } }
+  if (!body.statut || !body.data) return null
+  const state = body.data.statut
+  if (state === "paid") {
+    const amount = Math.floor(Number(body.data.Montant))
+    return { status: "paid", paidAmount: Number.isFinite(amount) ? amount : null }
+  }
+  if (state === "failure" || state === "failed" || state === "no paid") return { status: "failed", paidAmount: null }
+  return { status: "pending", paidAmount: null }
+}
+
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405)
+
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+
+  // ─── Authentification du serveur Vitalya ───
+  const secret = req.headers.get("x-payment-secret") ?? ""
+  const { data: stored } = await admin.from("app_secrets").select("sha256_hex").eq("name", "payment_webhook").maybeSingle()
+  if (!secret || !stored || stored.sha256_hex !== (await sha256Hex(secret))) return json({ error: "forbidden" }, 403)
+
+  const body = (await req.json().catch(() => null)) as { provider?: unknown; reference?: unknown } | null
+  const provider = body?.provider === "pawapay" || body?.provider === "moneyfusion" ? body.provider : null
+  const reference = typeof body?.reference === "string" ? body.reference : ""
+  if (!provider || !(provider === "pawapay" ? UUID.test(reference) : MF_TOKEN.test(reference))) {
+    return json({ error: "invalid_request" }, 400)
+  }
+
+  // ─── Vérification auprès du prestataire ───
+  let verified: Verified
+  try {
+    verified = provider === "pawapay" ? await verifyPawapay(reference.toLowerCase()) : await verifyMoneyFusion(reference)
+  } catch (error) {
+    console.error("verify", provider, String(error))
+    verified = null
+  }
+  if (!verified) return json({ outcome: "error" }, 502)
+  if (verified.status === "unknown") return json({ outcome: "unknown" })
+  if (verified.status === "pending") return json({ outcome: "pending" })
+
+  // ─── Enregistrement (idempotent) ───
+  const { data, error } = await admin
+    .rpc("confirm_payment", {
+      p_secret: secret,
+      p_provider: provider,
+      p_reference: provider === "pawapay" ? reference.toLowerCase() : reference,
+      p_status: verified.status,
+      p_paid_amount: verified.paidAmount ?? 0,
+    })
+    .maybeSingle<{
+      payment_id: string
+      user_email: string
+      user_name: string | null
+      tier: string
+      period_end: string | null
+      newly_activated: boolean
+      first_subscription: boolean
+    }>()
+
+  if (error || !data) {
+    const message = error?.message ?? "aucune ligne"
+    console.error("confirm_payment", provider, message)
+    if (message.includes("payment_not_found")) return json({ outcome: "unknown" })
+    if (message.includes("amount_mismatch")) {
+      await admin.from("payment_logs").insert({
+        provider_attempted: provider, provider_used: provider, status: "payment_failed",
+        error_message: `Montant encaissé insuffisant (${verified.paidAmount ?? 0})`,
+      })
+      return json({ outcome: "rejected" })
+    }
+    return json({ outcome: "error" }, 500)
+  }
+
+  // Journal : uniquement lors d'un changement d'état (pas de doublon à chaque relecture)
+  if (data.newly_activated || verified.status === "failed") {
+    const { data: sub } = await admin.from("subscriptions").select("user_id, amount, currency, status").eq("id", data.payment_id).maybeSingle()
+    const { count: alreadyLogged } = data.newly_activated
+      ? { count: 0 }
+      : await admin.from("payment_logs").select("id", { count: "exact", head: true }).eq("payment_id", data.payment_id).eq("status", "payment_failed")
+    if (data.newly_activated || (sub?.status === "failed" && !alreadyLogged)) {
+      await admin.from("payment_logs").insert({
+        user_id: sub?.user_id ?? null, payment_id: data.payment_id, amount: sub?.amount ?? null, currency: sub?.currency ?? null,
+        provider_attempted: provider, provider_used: provider, status: verified.status === "paid" ? "paid" : "payment_failed",
+      })
+    }
+  }
+
+  return json({ outcome: verified.status, payment: data })
+})

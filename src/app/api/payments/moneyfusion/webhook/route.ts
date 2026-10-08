@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 const TOKEN = /^[A-Za-z0-9_-]{6,200}$/
 
 export async function POST(request: NextRequest) {
-  if (!features.moneyfusion) return NextResponse.json({ received: false }, { status: 503 })
+  if (!features.payments) return NextResponse.json({ received: false }, { status: 503 })
 
   const body = (await request.json().catch(() => null)) as { tokenPay?: unknown; token?: unknown } | null
   const token = [body?.tokenPay, body?.token].find((value): value is string => typeof value === "string" && TOKEN.test(value))
