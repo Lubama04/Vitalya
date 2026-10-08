@@ -43,6 +43,7 @@ const articleSchema = z.object({
       "L'image doit provenir du stockage Vitalya",
     ),
   category: z.union([z.uuid(), z.literal("")]),
+  authorProfileId: z.union([z.uuid(), z.literal("")]),
   accessLevel: z.enum(ACCESS_LEVELS),
   published: z.boolean(),
   publishedAt: z.string().optional(),
@@ -62,6 +63,7 @@ export async function saveArticle(_prev: ActionState, formData: FormData): Promi
     content: String(formData.get("content") ?? "").replace(/\r\n?/g, "\n"),
     coverImage: formData.get("coverImage") ?? "",
     category: formData.get("category") ?? "",
+    authorProfileId: formData.get("authorProfileId") ?? "",
     accessLevel: formData.get("accessLevel"),
     published: formData.get("published") === "on",
     publishedAt: formData.get("publishedAt") || undefined,
@@ -83,6 +85,7 @@ export async function saveArticle(_prev: ActionState, formData: FormData): Promi
     content: data.content,
     cover_image: data.coverImage || null,
     category: data.category || null,
+    author_profile_id: data.authorProfileId || null,
     access_level: data.accessLevel,
     published: data.published,
     published_at: publishedAt,
@@ -115,6 +118,71 @@ export async function deleteArticle(formData: FormData): Promise<void> {
   if (error) console.error("deleteArticle", error.message)
   revalidatePath("/", "layout")
   redirect("/admin/articles")
+}
+
+// ─── Auteurs ──────────────────────────────────────────────────
+
+const mediaPrefix = `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/article-media/`
+
+const authorSchema = z.object({
+  id: z.uuid().optional(),
+  name: z.string().trim().min(2, "Nom trop court").max(120, "Nom trop long"),
+  specialty: z.string().trim().max(120, "Spécialité trop longue").optional(),
+  bio: z.string().trim().max(400, "Bio limitée à 400 caractères").optional(),
+  email: z.union([z.email("Email invalide").max(254), z.literal("")]),
+  photoUrl: z
+    .string()
+    .trim()
+    .max(600)
+    .refine((value) => value === "" || value.startsWith(mediaPrefix), "La photo doit provenir du stockage Vitalya"),
+})
+
+export async function saveAuthor(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const viewer = await assertStaff()
+  if (!viewer) return fail("Accès refusé.")
+
+  const parsed = authorSchema.safeParse({
+    id: formData.get("id") || undefined,
+    name: formData.get("name"),
+    specialty: formData.get("specialty") || undefined,
+    bio: formData.get("bio") || undefined,
+    email: String(formData.get("email") ?? "").trim().toLowerCase(),
+    photoUrl: formData.get("photoUrl") ?? "",
+  })
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Données invalides")
+
+  const { id, name, specialty, bio, email, photoUrl } = parsed.data
+  const row = {
+    name,
+    specialty: specialty || null,
+    bio: bio || null,
+    email: email || null,
+    photo_url: photoUrl || null,
+  }
+  const supabase = await createClient()
+  // Aucun « select » après écriture : l'email n'est pas lisible via l'API
+  const { error } = id
+    ? await supabase.from("authors").update(row).eq("id", id)
+    : await supabase.from("authors").insert(row)
+  if (error) {
+    console.error("saveAuthor", error.message)
+    return fail("Enregistrement impossible.")
+  }
+  revalidatePath("/admin/auteurs")
+  revalidatePath("/", "layout")
+  return ok(id ? "Auteur mis à jour." : "Auteur ajouté.")
+}
+
+export async function deleteAuthor(formData: FormData): Promise<void> {
+  const viewer = await getViewer()
+  const id = z.uuid().safeParse(formData.get("id"))
+  if (viewer?.role !== "admin" || !id.success) redirect("/admin/auteurs")
+  const supabase = await createClient()
+  const { error } = await supabase.from("authors").delete().eq("id", id.data)
+  if (error) console.error("deleteAuthor", error.message)
+  revalidatePath("/admin/auteurs")
+  revalidatePath("/", "layout")
+  redirect("/admin/auteurs")
 }
 
 // ─── Abonnés ──────────────────────────────────────────────────

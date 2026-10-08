@@ -24,6 +24,7 @@ export type EditableArticle = {
   content: string
   coverImage: string
   category: string
+  authorProfileId: string
   accessLevel: AccessLevel
   published: boolean
   publishedAt: string | null
@@ -42,11 +43,13 @@ function toLocalInput(iso: string | null): string {
 export function ArticleEditor({
   article,
   categories,
+  authors,
   canDelete,
   deleteAction,
 }: {
   article: EditableArticle
   categories: { id: string; name: string }[]
+  authors: { id: string; name: string }[]
   canDelete: boolean
   deleteAction?: (formData: FormData) => Promise<void>
 }) {
@@ -172,6 +175,16 @@ export function ArticleEditor({
                 ))}
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="authorProfileId">Auteur</Label>
+            <select id="authorProfileId" name="authorProfileId" defaultValue={article.authorProfileId} className="h-10 w-full rounded-md border bg-white px-2 text-sm">
+              <option value="">Aucun auteur affiché</option>
+              {authors.map((author) => (
+                <option key={author.id} value={author.id}>{author.name}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">

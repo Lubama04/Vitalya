@@ -12,9 +12,10 @@ import { Paywall } from "@/components/article/paywall"
 import { ShareButton } from "@/components/article/share-button"
 import { ViewTracker } from "@/components/article/view-tracker"
 import { ArticleReader } from "@/components/reader/article-reader"
+import { ProfilAuteur } from "@/components/mdx/cards"
 import { getViewer, isStaff } from "@/lib/auth"
 import { accentOnWhite, formatDate, SITE, textOn } from "@/lib/constants"
-import { getArticleBySlug, getLatestArticles } from "@/lib/data"
+import { getArticleBySlug, getAuthor, getLatestArticles } from "@/lib/data"
 import { createClient } from "@/lib/supabase/server"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -45,10 +46,11 @@ export default async function ArticlePage({ params }: Props) {
   if (!article) notFound()
 
   const supabase = await createClient()
-  const [{ data: stats }, { data: comments }, related] = await Promise.all([
+  const [{ data: stats }, { data: comments }, related, author] = await Promise.all([
     supabase.rpc("get_article_stats", { p_article_id: article.id }).maybeSingle(),
     supabase.rpc("get_article_comments", { p_article_id: article.id }),
     getLatestArticles({ limit: 3, categoryId: article.category?.id, excludeId: article.id }),
+    getAuthor(article.authorProfileId),
   ])
 
   // Données structurées pour le référencement
@@ -60,6 +62,7 @@ export default async function ArticlePage({ params }: Props) {
     datePublished: article.publishedAt,
     image: article.coverImage ? [article.coverImage] : undefined,
     isAccessibleForFree: article.accessLevel === "free",
+    author: author ? { "@type": "Person", name: author.name } : undefined,
     publisher: { "@type": "Organization", name: SITE.name },
   }
 
@@ -153,6 +156,7 @@ export default async function ArticlePage({ params }: Props) {
           }
           footer={
             <>
+              {author && <ProfilAuteur author={author} className="mt-14" />}
               <div className="mt-12 flex flex-wrap items-center gap-3 border-y py-6">
                 <LikeButton
                   articleId={article.id}

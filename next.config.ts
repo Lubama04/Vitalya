@@ -48,6 +48,9 @@ const withPWA = withPWAInit({
   extendDefaultRuntimeCaching: true,
   workboxOptions: {
     disableDevLogs: true,
+    // Une nouvelle version attend l'accord du lecteur (bannière de mise à jour) :
+    // la page envoie { type: "SKIP_WAITING" } pour l'activer.
+    skipWaiting: false,
     // Règles prioritaires : pages privées et API jamais mises en cache
     runtimeCaching: [
       {

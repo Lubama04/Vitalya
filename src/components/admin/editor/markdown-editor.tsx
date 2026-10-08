@@ -13,6 +13,7 @@ import { CARET, EXTERNAL_LINK_DIALOG, IMAGE_DIALOG, INTERNAL_LINK_DIALOG, YOUTUB
 // ils doivent faire partie du bundle de la page pour être hydratés.
 import "@/components/mdx/avant-apres"
 import "@/components/mdx/interactive"
+import "@/components/mdx/engagement"
 import { InsertDialog } from "./insert-dialog"
 import { EditorToolbar, type QuickAction, type ViewMode } from "./toolbar"
 

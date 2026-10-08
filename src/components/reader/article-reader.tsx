@@ -7,6 +7,7 @@ import type { ReadingMode } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { BookReader, type BookMeta } from "./book-reader"
 import { createPositionSaver, loadPosition, persistMode, readLocalMode } from "./persistence"
+import { PassageShare } from "./passage-share"
 import { ScrollReader } from "./scroll-reader"
 
 // Position minimale / maximale pour proposer une reprise
@@ -75,7 +76,9 @@ export function ArticleReader({
   // ─── Au chargement : mode préféré + dernière position ───
   useEffect(() => {
     let cancelled = false
-    const effectiveMode = initialMode ?? readLocalMode() ?? "scroll"
+    // Lien vers un passage (?highlight=) : ouverture en mode défilement pour le surligner
+    const sharedPassage = new URLSearchParams(window.location.search).has("highlight")
+    const effectiveMode = sharedPassage ? "scroll" : (initialMode ?? readLocalMode() ?? "scroll")
     if (effectiveMode !== mode) setMode(effectiveMode)
 
     void loadPosition(articleId, userId).then((saved) => {
@@ -237,9 +240,11 @@ export function ArticleReader({
         {footer && <div className="lg:mx-auto lg:max-w-[calc(65ch+220px+3.5rem)] lg:pr-[calc(220px+3.5rem)]">{footer}</div>}
       </div>
 
+      <PassageShare containerRef={contentRef} active={mode === "scroll"} />
+
       {/* Proposition de reprise (mode défilement) */}
       {mode === "scroll" && scrollResume !== null && (
-        <div role="status" className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 motion-safe:animate-in motion-safe:slide-in-from-bottom-2 motion-safe:fade-in">
+        <div role="status" className="fixed inset-x-0 bottom-20 z-40 flex justify-center px-4 motion-safe:animate-in motion-safe:slide-in-from-bottom-2 motion-safe:fade-in">
           <div className="flex items-center gap-2 rounded-full bg-nuit/95 py-1.5 pr-1.5 pl-4 text-sm text-white shadow-xl">
             <History className="size-4 text-or" aria-hidden />
             <span className="hidden sm:inline">Vous en étiez à {Math.round(scrollResume * 100)} %</span>

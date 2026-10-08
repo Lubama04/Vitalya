@@ -38,6 +38,10 @@ import {
   Sparkle,
   StickyNote,
   Type,
+  BrainCircuit,
+  ChartBarBig,
+  AudioLines,
+  Leaf,
 } from "lucide-react"
 import { parseYouTubeId } from "@/lib/mdx/urls"
 import { COLOR_OPTIONS, FONT_OPTIONS } from "@/lib/mdx/typo"
@@ -60,6 +64,7 @@ export type FieldKind =
   | "image"
   | "images"
   | "video"
+  | "audio"
   | "article"
 
 export type DialogField = {
@@ -369,6 +374,50 @@ export const CATALOG: CatalogGroup[] = [
             ),
         },
       },
+      {
+        id: "quiz",
+        label: "Quiz",
+        hint: "Questions à choix multiples avec score final",
+        icon: BrainCircuit,
+        action: {
+          kind: "snippet",
+          build: () =>
+            block(
+              `<Quiz titre="${CARET}Testez vos connaissances">\n<Question texte="Quelle est la partie du baobab utilisée pour l'huile ?">\n<Reponse>Les feuilles</Reponse>\n<Reponse correcte="true" explication="L'huile est pressée à froid à partir des graines.">Les graines</Reponse>\n<Reponse>L'écorce</Reponse>\n</Question>\n<Question texte="L'huile de baobab est-elle une huile sèche ?">\n<Reponse correcte="true" explication="Elle pénètre vite sans laisser de film gras.">Oui</Reponse>\n<Reponse>Non</Reponse>\n</Question>\n</Quiz>`,
+            ),
+        },
+      },
+      {
+        id: "sondage",
+        label: "Sondage",
+        hint: "Vote en un clic, résultats affichés après le vote",
+        icon: ChartBarBig,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Sondage",
+            description: "Les votes sont enregistrés dans Supabase (un vote par lecteur et par sondage).",
+            fields: [
+              { name: "question", label: "Question", kind: "text", required: true, placeholder: "Utilisez-vous des huiles végétales ?" },
+              { name: "options", label: "Options (une par ligne, 2 à 8)", kind: "textarea", required: true, placeholder: "Tous les jours\nDe temps en temps\nJamais" },
+            ],
+            validate: (v) => {
+              const count = (v.options ?? "").split("\n").map((line) => line.trim()).filter(Boolean).length
+              return count < 2 || count > 8 ? "Indiquez entre 2 et 8 options." : null
+            },
+            build: (v) => {
+              const options = (v.options ?? "")
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .slice(0, 8)
+                .map((line) => `<Option>${text(line)}</Option>`)
+                .join("\n")
+              return block(`<Sondage question="${attr(v.question ?? "")}">\n${options}\n</Sondage>`)
+            },
+          },
+        },
+      },
     ],
   },
 
@@ -550,6 +599,47 @@ export const CATALOG: CatalogGroup[] = [
           },
         },
       },
+      {
+        id: "fiche-ingredient",
+        label: "Fiche ingrédient",
+        hint: "Carte signature : origine, usages, niveau de preuve",
+        icon: Leaf,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Fiche ingrédient",
+            fields: [
+              { name: "nom", label: "Nom", kind: "text", required: true, placeholder: "Baobab" },
+              { name: "nomScientifique", label: "Nom scientifique", kind: "text", placeholder: "Adansonia digitata" },
+              { name: "origine", label: "Origine", kind: "text", placeholder: "Afrique subsaharienne" },
+              { name: "partieUtilisee", label: "Partie utilisée", kind: "text", placeholder: "Fruit, huile, feuilles" },
+              { name: "utilisationsTraditionnelles", label: "Utilisations traditionnelles", kind: "textarea" },
+              {
+                name: "niveauPreuve",
+                label: "Niveau de preuve",
+                kind: "select",
+                defaultValue: "3",
+                options: [
+                  { value: "1", label: "1 : très faible" },
+                  { value: "2", label: "2 : faible" },
+                  { value: "3", label: "3 : modéré" },
+                  { value: "4", label: "4 : élevé" },
+                  { value: "5", label: "5 : très élevé" },
+                ],
+              },
+              { name: "precautions", label: "Précautions", kind: "textarea" },
+            ],
+            build: (v) => {
+              const keys = ["nom", "nomScientifique", "origine", "partieUtilisee", "utilisationsTraditionnelles", "precautions"] as const
+              const attributes = keys
+                .filter((key) => v[key])
+                .map((key) => `  ${key}="${attr(v[key] ?? "")}"`)
+              attributes.splice(5, 0, `  niveauPreuve={${Number(v.niveauPreuve) || 3}}`)
+              return block(`<FicheIngredient\n${attributes.join("\n")}\n/>`)
+            },
+          },
+        },
+      },
     ],
   },
   {
@@ -678,6 +768,24 @@ export const CATALOG: CatalogGroup[] = [
             validate: (v) => (parseYouTubeId(v.url ?? "") ? null : "URL YouTube non reconnue."),
             build: (v) =>
               block(`<YouTube videoId="${parseYouTubeId(v.url ?? "") ?? ""}"${v.titre ? ` titre="${attr(v.titre)}"` : ""} />`),
+          },
+        },
+      },
+      {
+        id: "audio",
+        label: "Audio",
+        hint: "Version audio ou podcast (MP3, M4A…)",
+        icon: AudioLines,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Audio",
+            description: "Le fichier est importé dans article-media/audio.",
+            fields: [
+              { name: "src", label: "Fichier audio", kind: "audio", required: true },
+              { name: "titre", label: "Titre", kind: "text", placeholder: "Écouter l'article" },
+            ],
+            build: (v) => block(`<Audio src="${attr(v.src ?? "")}"${v.titre ? ` titre="${attr(v.titre)}"` : ""} />`),
           },
         },
       },

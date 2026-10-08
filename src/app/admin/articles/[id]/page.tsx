@@ -22,11 +22,12 @@ export default async function EditArticlePage({
   if (!z.uuid().safeParse(id).success) notFound()
 
   const supabase = await createClient()
-  const [{ data: article }, categories, viewer] = await Promise.all([
+  const [{ data: article }, categories, viewer, { data: authors }] = await Promise.all([
     // Le contenu n'est lisible que via cette fonction réservée à l'équipe
     supabase.rpc("get_article_for_edit", { p_id: id }).maybeSingle(),
     getCategories(),
     getViewer(),
+    supabase.from("authors").select("id, name").order("name"),
   ])
   if (!article) notFound()
 
@@ -48,11 +49,13 @@ export default async function EditArticlePage({
           content: article.content,
           coverImage: article.cover_image ?? "",
           category: article.category ?? "",
+          authorProfileId: article.author_profile_id ?? "",
           accessLevel: isAccessLevel(article.access_level) ? article.access_level : "free",
           published: article.published,
           publishedAt: article.published_at,
         }}
         categories={categories}
+        authors={authors ?? []}
         canDelete={viewer?.role === "admin"}
         deleteAction={deleteArticle}
       />

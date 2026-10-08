@@ -166,7 +166,11 @@
 .livre-pages .chapeau,
 .livre-pages .accordeon,
 .livre-pages .onglets,
-.livre-pages .etape {
+.livre-pages .etape,
+.livre-pages .quiz li,
+.livre-pages .sondage,
+.livre-pages .audio-player,
+.livre-pages .fiche-ingredient {
   break-inside: avoid;
 }
 .livre-pages h2,
@@ -216,4 +220,10 @@
 .livre-flip-next .livre-ombre,
 .livre-flip-prev .livre-ombre {
   animation: livre-ombre 300ms ease;
+}
+
+/* Passage partagé (?highlight=) : surlignage sans modifier le DOM */
+::highlight(vitalya-passage) {
+  background-color: rgba(244, 185, 66, 0.55);
+  color: inherit;
 }

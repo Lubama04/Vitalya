@@ -12,6 +12,7 @@ export type Json =
 type ArticleRow = {
   access_level: string
   author_id: string | null
+  author_profile_id: string | null
   category: string | null
   content: string
   cover_image: string | null
@@ -44,6 +45,7 @@ export type Database = {
         Insert: {
           access_level?: string
           author_id?: string | null
+          author_profile_id?: string | null
           category?: string | null
           content?: string
           cover_image?: string | null
@@ -75,6 +77,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      authors: {
+        Row: {
+          bio: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          photo_url: string | null
+          specialty: string | null
+          updated_at: string
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          photo_url?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          photo_url?: string | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      votes: {
+        Row: { article_id: string; count: number; option_id: string; updated_at: string }
+        Insert: { article_id: string; count?: number; option_id: string; updated_at?: string }
+        Update: { article_id?: string; count?: number; option_id?: string; updated_at?: string }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -328,6 +369,23 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
+      admin_list_authors: {
+        Args: never
+        Returns: {
+          bio: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          photo_url: string | null
+          specialty: string | null
+          updated_at: string
+        }[]
+      }
+      cast_vote: {
+        Args: { p_article_id: string; p_option_id: string }
+        Returns: { accepted: boolean; count: number; option_id: string }[]
+      }
       admin_set_profile: {
         Args: { p_role: string; p_tier: string; p_user_id: string }
         Returns: undefined

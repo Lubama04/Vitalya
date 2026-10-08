@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Check, FileVideo, ImagePlus, Loader2, Search, X } from "lucide-react"
+import { Check, FileAudio, FileVideo, ImagePlus, Loader2, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -118,7 +118,7 @@ function MediaField({
     onChange(multiple ? JSON.stringify(next) : "")
   }
 
-  const Icon = kind === "video" ? FileVideo : ImagePlus
+  const Icon = kind === "video" ? FileVideo : kind === "audio" ? FileAudio : ImagePlus
 
   return (
     <div className="space-y-2">
@@ -126,7 +126,9 @@ function MediaField({
         <div className={cn("grid gap-2", multiple ? "grid-cols-4" : "grid-cols-1")}>
           {urls.map((url) => (
             <div key={url} className="relative overflow-hidden rounded-lg border bg-muted">
-              {kind === "video" ? (
+              {kind === "audio" ? (
+                <audio src={url} controls preload="metadata" className="w-full" />
+              ) : kind === "video" ? (
                 <video src={url} className="aspect-video w-full" muted preload="metadata" />
               ) : (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -142,7 +144,7 @@ function MediaField({
       {(multiple || urls.length === 0) && (
         <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-4 text-sm font-medium hover:bg-vert-pale">
           {uploading > 0 ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
-          {uploading > 0 ? `Import en cours (${uploading})…` : multiple ? "Ajouter des images" : `Importer ${kind === "video" ? "une vidéo" : "une image"}`}
+          {uploading > 0 ? `Import en cours (${uploading})…` : multiple ? "Ajouter des images" : `Importer ${kind === "video" ? "une vidéo" : kind === "audio" ? "un fichier audio" : "une image"}`}
           <input
             type="file"
             accept={MEDIA_RULES[kind].types.join(",")}
@@ -237,10 +239,10 @@ export function InsertDialog({
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
-                ) : field.kind === "image" || field.kind === "images" || field.kind === "video" ? (
+                ) : field.kind === "image" || field.kind === "images" || field.kind === "video" || field.kind === "audio" ? (
                   <MediaField
                     field={field}
-                    kind={field.kind === "video" ? "video" : "image"}
+                    kind={field.kind === "video" ? "video" : field.kind === "audio" ? "audio" : "image"}
                     multiple={field.kind === "images"}
                     value={value}
                     onChange={(next) => set(field.name, next)}

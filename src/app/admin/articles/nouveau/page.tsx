@@ -2,11 +2,16 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { ArticleEditor } from "@/components/admin/article-editor"
 import { getCategories } from "@/lib/data"
+import { createClient } from "@/lib/supabase/server"
 
 export const metadata = { title: "Nouvel article" }
 
 export default async function NewArticlePage() {
-  const categories = await getCategories()
+  const supabase = await createClient()
+  const [categories, { data: authors }] = await Promise.all([
+    getCategories(),
+    supabase.from("authors").select("id, name").order("name"),
+  ])
 
   return (
     <div className="space-y-6">
@@ -22,11 +27,13 @@ export default async function NewArticlePage() {
           content: "",
           coverImage: "",
           category: categories[0]?.id ?? "",
+          authorProfileId: "",
           accessLevel: "free",
           published: false,
           publishedAt: null,
         }}
         categories={categories}
+        authors={authors ?? []}
         canDelete={false}
       />
     </div>

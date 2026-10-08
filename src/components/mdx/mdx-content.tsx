@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef } from "react"
+import type { ComponentPropsWithoutRef, ReactNode } from "react"
 import { compileMDX } from "next-mdx-remote/rsc"
 import { ALireSuite, type MdxArticleContext } from "@/components/mdx/a-lire-suite"
 import { AvantApres } from "@/components/mdx/avant-apres"
@@ -22,6 +22,8 @@ import {
 } from "@/components/mdx/editorial"
 import { Figure, Galerie, HeroSection, Infographie, MediaText, SafeImage, Video, YouTube } from "@/components/mdx/media"
 import { Accordeon, Etape, Onglet, Onglets, Timeline } from "@/components/mdx/interactive"
+import { AudioLecteur, Question, Quiz, Reponse, Sondage, SondageOption } from "@/components/mdx/engagement"
+import { FicheIngredient } from "@/components/mdx/cards"
 import {
   CitationForte,
   Couleur,
@@ -59,6 +61,21 @@ export const MDX_ALLOWLIST: Record<string, readonly string[]> = {
   Onglet: ["titre"],
   Timeline: ["titre"],
   Etape: ["date", "titre"],
+  Quiz: ["titre"],
+  Question: ["texte"],
+  Reponse: ["correcte", "explication"],
+  Sondage: ["question"],
+  Option: [],
+  Audio: ["src", "titre"],
+  FicheIngredient: [
+    "nom",
+    "nomScientifique",
+    "origine",
+    "partieUtilisee",
+    "utilisationsTraditionnelles",
+    "niveauPreuve",
+    "precautions",
+  ],
   // Information
   Encart: ["titre"],
   ARetenir: ["titre"],
@@ -253,6 +270,18 @@ export async function MdxContent({
     Onglet,
     Timeline,
     Etape,
+    Quiz,
+    Question,
+    Reponse,
+    // Le sondage a besoin de l'article pour enregistrer les votes
+    Sondage: ({ question, children }: { question?: string; children?: ReactNode }) => (
+      <Sondage question={question} articleId={context.articleId}>
+        {children}
+      </Sondage>
+    ),
+    Option: SondageOption,
+    Audio: AudioLecteur,
+    FicheIngredient,
     Encart,
     ARetenir,
     Avertissement,
