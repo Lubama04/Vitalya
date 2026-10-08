@@ -34,6 +34,7 @@ export async function verifyAndConfirmPayment(provider: PaymentProvider, referen
   if (provider === "pawapay") {
     const checkout = await getPawapayCheckout(reference)
     if (!checkout) return "error"
+    if (checkout.status === "NOT_FOUND") return "unknown"
     if (checkout.status === "COMPLETED") {
       status = "paid"
       paidAmount = checkout.currency === "XAF" ? checkout.paidAmount : null

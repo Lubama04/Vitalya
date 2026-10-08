@@ -50,7 +50,10 @@ type ActiveConf = {
 export async function getPawapayProviders(country: PawapayCountry): Promise<PawapayProvider[]> {
   try {
     const response = await pawapayFetch(`/v2/active-conf?country=${country}&operationType=DEPOSIT`)
-    if (!response.ok) return []
+    if (!response.ok) {
+      console.error("getPawapayProviders HTTP", response.status)
+      return []
+    }
     const conf = (await response.json()) as ActiveConf
     const currency = PAWAPAY_COUNTRIES[country].currency
     return (conf.countries ?? [])
@@ -120,7 +123,7 @@ export async function createPawapayCheckout(input: {
 }
 
 export type CheckoutStatus = {
-  status: "WAITING_PAYMENT" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELLED" | "UNKNOWN"
+  status: "WAITING_PAYMENT" | "PROCESSING" | "COMPLETED" | "FAILED" | "EXPIRED" | "CANCELLED" | "NOT_FOUND" | "UNKNOWN"
   /** Montant effectivement encaissé (dépôt réussi), en unités entières */
   paidAmount: number | null
   currency: string | null
@@ -130,11 +133,16 @@ export type CheckoutStatus = {
 export async function getPawapayCheckout(checkoutId: string): Promise<CheckoutStatus | null> {
   try {
     const response = await pawapayFetch(`/v2/checkouts/${encodeURIComponent(checkoutId)}`)
-    if (!response.ok) return null
+    if (response.status === 404) return { status: "NOT_FOUND", paidAmount: null, currency: null }
+    if (!response.ok) {
+      console.error("getPawapayCheckout HTTP", response.status)
+      return null
+    }
     const body = (await response.json()) as {
       status?: string
       data?: { status?: string; deposit?: { status?: string; amount?: string; currency?: string } }
     }
+    if (body.status === "NOT_FOUND") return { status: "NOT_FOUND", paidAmount: null, currency: null }
     if (body.status !== "FOUND" || !body.data) return null
     const known = ["WAITING_PAYMENT", "PROCESSING", "COMPLETED", "FAILED", "EXPIRED", "CANCELLED"] as const
     const status = known.find((value) => value === body.data?.status) ?? "UNKNOWN"
