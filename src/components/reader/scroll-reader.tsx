@@ -111,7 +111,7 @@ export function ScrollReader({
           )}
 
           {showContent ? (
-            <div ref={contentRef} className="prose-vitalya max-w-[65ch] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
+            <div ref={contentRef} className="prose-vitalya fondu-entree max-w-[65ch]">
               {children}
             </div>
           ) : (

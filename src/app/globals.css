@@ -224,6 +224,19 @@
   animation: livre-ombre 300ms ease;
 }
 
+/* Apparition du texte de l'article : opacité seule (gérée par le compositeur).
+   L'animation « animate-in » anime aussi filter: blur() via des variables CSS,
+   ce qui recalcule le style et repeint tout le bloc à chaque image. */
+@keyframes fondu-entree {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .fondu-entree {
+    animation: fondu-entree 300ms ease-out;
+  }
+}
+
 /* Passage partagé (?highlight=) : surlignage sans modifier le DOM */
 ::highlight(vitalya-passage) {
   background-color: rgba(244, 185, 66, 0.55);
