@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 export const metadata: Metadata = {
   title: "Abonnements",
   description:
-    "Gratuit, Premium à 5 € (2 950 FCFA) ou Expert à 10 € (5 900 FCFA) par mois, payable par Mobile Money, Wave ou carte bancaire : choisissez votre formule Vitalya.",
+    "Gratuit, Premium à 6 000 FCFA ou Expert à 11 000 FCFA par mois, payable par Mobile Money, Wave ou carte bancaire : choisissez votre formule Vitalya.",
 }
 
 const ICONS = { free: Leaf, premium: Crown, expert: Gem } as const
@@ -85,10 +85,11 @@ export default async function PricingPage() {
                 <h2 className="text-2xl font-bold">{tier.name}</h2>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
-              <p className="mt-6 font-heading text-5xl font-bold text-nuit">
-                {tier.price} €<span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
+              <p className="mt-6 font-heading text-4xl font-bold whitespace-nowrap text-nuit">
+                {formatFcfa(tier.priceFcfa)}
+                <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
               </p>
-              {tier.priceFcfa > 0 && <p className="mt-1 text-sm text-muted-foreground">soit {formatFcfa(tier.priceFcfa)}</p>}
+              {tier.price > 0 && <p className="mt-1 text-sm text-muted-foreground">environ {tier.price} €</p>}
               <ul className="mt-8 flex-1 space-y-3">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex gap-3 text-sm">

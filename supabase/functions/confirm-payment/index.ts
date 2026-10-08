@@ -55,7 +55,9 @@ async function verifyMoneyFusion(token: string): Promise<Verified> {
   if (response.status === 404) return { status: "unknown", paidAmount: null }
   if (!response.ok) return null
   const body = (await response.json()) as { statut?: boolean; data?: { statut?: string; Montant?: number | string } }
-  if (!body.statut || !body.data) return null
+  // Jeton inconnu : MoneyFusion répond { statut: false, message: "paiement introuvable" }
+  if (body.statut === false) return { status: "unknown", paidAmount: null }
+  if (!body.data) return null
   const state = body.data.statut
   if (state === "paid") {
     const amount = Math.floor(Number(body.data.Montant))

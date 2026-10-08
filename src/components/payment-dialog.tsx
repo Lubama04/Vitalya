@@ -67,8 +67,8 @@ export function PaymentDialog({
         <DialogHeader>
           <DialogTitle className="text-2xl">Abonnement {tierName}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-baseline gap-x-2">
-            <span className="font-heading text-3xl font-bold text-nuit">{priceEur} €</span>
-            <span>soit {formatFcfa(priceFcfa)} · 1 mois d&apos;accès, sans renouvellement automatique</span>
+            <span className="font-heading text-3xl font-bold text-nuit">{formatFcfa(priceFcfa)}</span>
+            <span>environ {priceEur} € · 1 mois d&apos;accès, sans renouvellement automatique</span>
           </DialogDescription>
         </DialogHeader>
         <PaymentForm tier={tier} />

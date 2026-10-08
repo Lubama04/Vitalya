@@ -50,6 +50,7 @@ export function isRole(value: unknown): value is Role {
 export type PricingTier = {
   id: AccessLevel
   name: string
+  /** Équivalent indicatif en euros (arrondi) */
   price: number
   /** Prix mensuel en francs CFA (doit correspondre à subscription_price en base) */
   priceFcfa: number
@@ -75,8 +76,8 @@ export const PRICING: PricingTier[] = [
   {
     id: "premium",
     name: "Premium",
-    price: 5,
-    priceFcfa: 2950,
+    price: 9,
+    priceFcfa: 6000,
     description: "Pour aller plus loin dans votre routine santé et beauté.",
     features: [
       "Tout le contenu Gratuit",
@@ -90,8 +91,8 @@ export const PRICING: PricingTier[] = [
   {
     id: "expert",
     name: "Expert",
-    price: 10,
-    priceFcfa: 5900,
+    price: 17,
+    priceFcfa: 11000,
     description: "L'accès intégral, avec l'éclairage de nos spécialistes.",
     features: [
       "Tout le contenu Premium",

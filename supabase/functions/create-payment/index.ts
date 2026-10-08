@@ -20,7 +20,6 @@ const MONEYFUSION_API_URL = Deno.env.get("MONEYFUSION_API_URL") ?? ""
 const ALLOWED_ORIGINS = [
   "https://vitalya.africa",
   "https://www.vitalya.africa",
-  "https://vitalya-mocha.vercel.app",
   "http://localhost:3000",
 ]
 

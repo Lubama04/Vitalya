@@ -2,7 +2,7 @@
 
 Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et le **bien-être africains**.
 
-- **Production** : https://vitalya-mocha.vercel.app
+- **Production** : https://vitalya.africa
 - **Dépôt** : https://github.com/Lubama04/Vitalya
 - **Supabase** : projet `vitalya` (`cocheygwpsdbtxegdkzf`, région Paris `eu-west-3`, organisation Flaugust Dev)
 - **Vercel** : projet `vitalya` (équipe Flaugust dev, région d'exécution `cdg1`)
@@ -30,7 +30,7 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | `/articles` | Tous les articles (pagination) |
 | `/articles/[slug]` | Article : couverture pleine largeur, MDX, **paywall**, j'aime, commentaires en temps réel, articles similaires, JSON-LD `Article`, image Open Graph générée (`opengraph-image`) |
 | `/categories/[slug]` | Articles d'une rubrique |
-| `/abonnement` | Offres Gratuit / Premium 5 € (2 950 FCFA) / Expert 10 € (5 900 FCFA), modale de paiement (Mobile Money ou carte bancaire), FAQ |
+| `/abonnement` | Offres Gratuit / Premium 6 000 FCFA / Expert 11 000 FCFA, modale de paiement (Mobile Money ou carte bancaire), FAQ |
 | `/abonnement/confirmation` | Retour après paiement : vérification auprès du prestataire, succès (redirection vers `/profil`), échec (réessayer) ou attente (relecture toutes les 5 s). `/abonnement/retour` y redirige |
 | `/abonnement/erreur` | Paiement non abouti, bouton Réessayer |
 | `/auth` | Connexion, inscription, mot de passe oublié (`/auth/callback` pour les liens email) |
@@ -71,7 +71,8 @@ Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 | `20261008130000_vote_accepte.sql` | retour « vote accepté » |
 | `20261009090000_paiements_notifications.sql` | colonnes de paiement mobile, `create_payment`, `confirm_payment`, niveau effectif `current_tier`, préférences d'alerte |
 | `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
-| `20261009150000_paiements_fallback.sql` | table `payment_logs`, montants 2 950 / 5 900 FCFA, période d'un mois, détection du premier abonnement |
+| `20261009150000_paiements_fallback.sql` | table `payment_logs`, période d'un mois, détection du premier abonnement |
+| `20261009170000_tarifs.sql` | tarifs : Premium 6 000 FCFA, Expert 11 000 FCFA |
 
 Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`, `payment_logs`.
 
@@ -84,8 +85,8 @@ Types TypeScript : [`src/types/database.ts`](src/types/database.ts) (régénére
 | Niveau | Rang | Accès |
 | --- | --- | --- |
 | `free` | 0 | articles gratuits |
-| `premium` | 1 | gratuits + premium (5 €, 2 950 FCFA / mois) |
-| `expert` | 2 | tout le magazine (10 €, 5 900 FCFA / mois) |
+| `premium` | 1 | gratuits + premium (6 000 FCFA / mois) |
+| `expert` | 2 | tout le magazine (11 000 FCFA / mois) |
 
 Le **niveau effectif** (`current_tier()`) est le plus élevé entre `profiles.subscription_tier` (attribué par un administrateur ou Stripe) et les abonnements `active` non expirés de la table `subscriptions` (paiements mobiles). Chaque paiement confirmé ouvre un mois, ajouté à la suite d'une période encore en cours. Les montants sont fixés en base (`subscription_price`), jamais par le navigateur.
 
@@ -166,7 +167,7 @@ Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne
 ## Mise en service des intégrations
 
 ### Supabase Auth (à faire dans le dashboard)
-1. **Authentication → URL Configuration** : *Site URL* = `https://vitalya-mocha.vercel.app`, *Redirect URLs* = `https://vitalya-mocha.vercel.app/**` et `http://localhost:3000/**`.
+1. **Authentication → URL Configuration** : *Site URL* = `https://vitalya.africa`, *Redirect URLs* = `https://vitalya.africa/**`, `https://www.vitalya.africa/**` et `http://localhost:3000/**`.
 2. **Authentication → SMTP** : configurer un SMTP (ex. Resend `smtp.resend.com`). Le SMTP par défaut de Supabase n'envoie qu'aux membres de l'organisation et est très limité.
 
 ### Resend
