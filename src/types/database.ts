@@ -216,6 +216,7 @@ export type Database = {
       }
       newsletters: {
         Row: {
+          audience: string
           content: string
           created_at: string
           created_by: string | null
@@ -225,6 +226,7 @@ export type Database = {
           subject: string
         }
         Insert: {
+          audience?: string
           content: string
           created_at?: string
           created_by?: string | null
@@ -234,6 +236,7 @@ export type Database = {
           subject: string
         }
         Update: {
+          audience?: string
           content?: string
           created_at?: string
           created_by?: string | null
@@ -400,6 +403,10 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
+      article_notification_recipients: {
+        Args: never
+        Returns: { email: string; full_name: string | null }[]
+      }
       attach_moneyfusion_token: { Args: { p_payment_id: string; p_token: string }; Returns: undefined }
       confirm_payment: {
         Args: { p_paid_amount: number; p_provider: string; p_reference: string; p_secret: string; p_status: string }
@@ -465,6 +472,14 @@ export type Database = {
         Returns: { comments_count: number; liked_by_me: boolean; likes_count: number }[]
       }
       increment_article_view: { Args: { p_slug: string }; Returns: undefined }
+      newsletter_audience_counts: {
+        Args: never
+        Returns: { tous: number; gratuits: number; premium: number; expert: number }[]
+      }
+      newsletter_recipients: {
+        Args: { p_audience: string }
+        Returns: { email: string; unsubscribe_token: string }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       subscribe_newsletter: { Args: { p_email: string }; Returns: undefined }

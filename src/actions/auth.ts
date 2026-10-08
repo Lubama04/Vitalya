@@ -2,10 +2,13 @@
 
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { safeRedirectPath } from "@/lib/auth"
 import { siteUrl } from "@/lib/env"
+import { sendEmail } from "@/lib/email"
+import { welcomeEmailHtml } from "@/lib/newsletter-email"
 import { fail, ok, type ActionState } from "@/actions/types"
 
 const emailSchema = z.email("Adresse email invalide").max(254).transform((v) => v.trim().toLowerCase())
@@ -71,6 +74,16 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     }
     console.error("signUp", error.code, error.message)
     return fail("Inscription impossible pour le moment. Réessayez plus tard.")
+  }
+
+  // Email de bienvenue, uniquement pour un compte réellement créé : pour une adresse
+  // déjà inscrite, Supabase renvoie un utilisateur sans identité (aucun envoi, pas d'énumération).
+  // Envoyé après la réponse pour ne pas ralentir l'inscription.
+  if (data.user && (data.user.identities?.length ?? 0) > 0) {
+    const { email, fullName } = parsed.data
+    after(async () => {
+      await sendEmail({ to: email, subject: "Bienvenue chez Vitalya 🌿", html: welcomeEmailHtml({ siteUrl, name: fullName }) })
+    })
   }
 
   // Confirmation d'email désactivée : session immédiate

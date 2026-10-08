@@ -78,3 +78,19 @@ export async function setReadingMode(mode: unknown): Promise<{ ok: boolean }> {
   const { error } = await supabase.from("profiles").update({ reading_mode: parsed.data }).eq("id", user.id)
   return { ok: !error }
 }
+
+/** Alerte email à chaque nouvel article (colonne notify_new_articles, choix du lecteur). */
+export async function setArticleAlerts(enabled: unknown): Promise<{ ok: boolean }> {
+  const parsed = z.boolean().safeParse(enabled)
+  if (!parsed.success) return { ok: false }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { ok: false }
+
+  const { error } = await supabase.from("profiles").update({ notify_new_articles: parsed.data }).eq("id", user.id)
+  if (!error) revalidatePath("/profil")
+  return { ok: !error }
+}

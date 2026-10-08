@@ -1,14 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { after } from "next/server"
 import { redirect } from "next/navigation"
 import { Resend } from "resend"
 import { z } from "zod"
 import { getViewer, isStaff } from "@/lib/auth"
 import { ACCESS_LEVELS, computeReadingTime, ROLES } from "@/lib/constants"
 import { publicEnv, siteUrl } from "@/lib/env"
-import { serverEnv } from "@/lib/env.server"
-import { newsletterHtml } from "@/lib/newsletter-email"
+import { features, serverEnv } from "@/lib/env.server"
+import { sendEmails } from "@/lib/email"
+import { newArticleEmailHtml, newsletterHtml } from "@/lib/newsletter-email"
 import { createClient } from "@/lib/supabase/server"
 import { fail, ok, type ActionState } from "@/actions/types"
 
@@ -104,8 +106,74 @@ export async function saveArticle(_prev: ActionState, formData: FormData): Promi
   }
 
   revalidatePath("/", "layout")
+
+  // Première publication effective : annonce par email aux lecteurs qui l'ont demandé
+  // (envoyée après la réponse ; une publication programmée dans le futur n'est pas annoncée)
+  let notified = false
+  if (data.published && publishedAt && new Date(publishedAt) <= new Date()) {
+    notified = await announceArticle(supabase, result.data.id)
+  }
+
   if (!data.id) redirect(`/admin/articles/${result.data.id}?cree=1`)
-  return ok(data.published ? "Article enregistré et publié." : "Brouillon enregistré.")
+  if (!data.published) return ok("Brouillon enregistré.")
+  return ok(notified ? "Article publié. Les lecteurs abonnés aux alertes vont être prévenus par email." : "Article enregistré et publié.")
+}
+
+type ServerSupabase = Awaited<ReturnType<typeof createClient>>
+
+/**
+ * Réserve l'annonce (notified_at posé de façon atomique : jamais deux envois)
+ * puis programme l'envoi des emails. Sans Resend configuré, rien n'est réservé.
+ */
+async function announceArticle(supabase: ServerSupabase, articleId: string): Promise<boolean> {
+  if (!features.email) return false
+
+  const { data: article } = await supabase
+    .from("articles")
+    .update({ notified_at: new Date().toISOString() })
+    .eq("id", articleId)
+    .eq("published", true)
+    .is("notified_at", null)
+    .select("title, subtitle, slug, cover_image, access_level, category:categories(name)")
+    .maybeSingle()
+    .overrideTypes<
+      {
+        title: string
+        subtitle: string | null
+        slug: string
+        cover_image: string | null
+        access_level: string
+        category: { name: string } | null
+      },
+      { merge: false }
+    >()
+  if (!article) return false
+
+  const { data: recipients, error } = await supabase.rpc("article_notification_recipients")
+  if (error || !recipients || recipients.length === 0) return false
+
+  const coverUrl = article.cover_image
+    ? article.cover_image.startsWith("http")
+      ? article.cover_image
+      : `${siteUrl}${article.cover_image}`
+    : null
+  const html = newArticleEmailHtml({
+    siteUrl,
+    title: article.title,
+    subtitle: article.subtitle,
+    category: article.category?.name ?? null,
+    slug: article.slug,
+    coverUrl,
+    premium: article.access_level !== "free",
+  })
+
+  after(async () => {
+    const sent = await sendEmails(
+      recipients.map((recipient) => ({ to: recipient.email, subject: `Nouvel article : ${article.title}`, html })),
+    )
+    console.info("announceArticle", articleId, `${sent}/${recipients.length}`)
+  })
+  return true
 }
 
 export async function deleteArticle(formData: FormData): Promise<void> {
@@ -224,6 +292,7 @@ const newsletterSchema = z.object({
   subject: z.string().trim().min(3, "Objet trop court").max(200, "Objet trop long"),
   content: z.string().trim().min(10, "Contenu trop court").max(100000),
   mode: z.enum(["test", "envoi"]),
+  audience: z.enum(["tous", "gratuits", "premium", "expert"]).default("tous"),
 })
 
 const BATCH_SIZE = 100
@@ -236,6 +305,7 @@ export async function sendNewsletter(_prev: ActionState, formData: FormData): Pr
     subject: formData.get("subject"),
     content: formData.get("content"),
     mode: formData.get("mode"),
+    audience: formData.get("audience") ?? undefined,
   })
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Données invalides")
 
@@ -243,27 +313,23 @@ export async function sendNewsletter(_prev: ActionState, formData: FormData): Pr
     return fail("Resend n'est pas configuré : ajoutez RESEND_API_KEY dans les variables d'environnement.")
   }
   const resend = new Resend(serverEnv.RESEND_API_KEY)
-  const { subject, content, mode } = parsed.data
+  const { subject, content, mode, audience } = parsed.data
   const supabase = await createClient()
 
-  // Destinataires : l'éditeur seul (test) ou tous les abonnés actifs
+  // Destinataires : l'éditeur seul (test) ou les inscrits actifs de l'audience choisie
+  // (filtrage par niveau effectif fait en base, réservé à l'équipe)
   let recipients: { email: string; token: string }[]
   if (mode === "test") {
     recipients = [{ email: viewer.email, token: "00000000-0000-0000-0000-000000000000" }]
   } else {
     recipients = []
     for (let from = 0; ; from += 1000) {
-      const { data, error } = await supabase
-        .from("newsletter_subscribers")
-        .select("email, unsubscribe_token")
-        .is("unsubscribed_at", null)
-        .order("created_at")
-        .range(from, from + 999)
+      const { data, error } = await supabase.rpc("newsletter_recipients", { p_audience: audience }).range(from, from + 999)
       if (error) return fail("Lecture des abonnés impossible.")
       recipients.push(...data.map((row) => ({ email: row.email, token: row.unsubscribe_token })))
       if (data.length < 1000) break
     }
-    if (recipients.length === 0) return fail("Aucun abonné actif à la newsletter.")
+    if (recipients.length === 0) return fail("Aucun abonné actif dans cette audience.")
   }
 
   let sent = 0
@@ -295,6 +361,7 @@ export async function sendNewsletter(_prev: ActionState, formData: FormData): Pr
       content,
       sent_at: new Date().toISOString(),
       recipients_count: sent,
+      audience,
       created_by: viewer.id,
     })
     revalidatePath("/admin/newsletter")
