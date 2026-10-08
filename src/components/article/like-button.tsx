@@ -52,7 +52,7 @@ export function LikeButton({
       onClick={handleClick}
       disabled={pending}
       aria-pressed={optimistic.liked}
-      className={cn("rounded-full", optimistic.liked && "border-orange/40 bg-orange/10 text-orange hover:bg-orange/15 hover:text-orange")}
+      className={cn("rounded-full", optimistic.liked && "border-orange/40 bg-orange/10 text-orange-fonce hover:bg-orange/15 hover:text-orange-fonce")}
     >
       <Heart className={cn("size-4 transition-transform", optimistic.liked && "scale-110 fill-orange")} />
       {optimistic.count} · J&apos;aime

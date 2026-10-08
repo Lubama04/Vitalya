@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { loadSupabase } from "@/lib/supabase/lazy"
 
 /** Comptabilise une vue (une seule fois par session de navigateur). */
 export function ViewTracker({ slug }: { slug: string }) {
@@ -13,7 +13,7 @@ export function ViewTracker({ slug }: { slug: string }) {
     } catch {
       // Stockage indisponible (navigation privée) : on compte quand même
     }
-    void createClient().rpc("increment_article_view", { p_slug: slug })
+    void loadSupabase().then((supabase) => supabase.rpc("increment_article_view", { p_slug: slug }))
   }, [slug])
 
   return null

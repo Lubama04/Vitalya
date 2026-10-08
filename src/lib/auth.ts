@@ -26,11 +26,15 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, avatar_url, subscription_tier, role, reading_mode, created_at")
-    .eq("id", user.id)
-    .maybeSingle()
+  // Niveau effectif = profil OU abonnement payé non expiré (mobile money, carte…)
+  const [{ data: profile }, { data: effectiveTier }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, email, full_name, avatar_url, subscription_tier, role, reading_mode, created_at")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase.rpc("current_tier"),
+  ])
 
   if (!profile) return null
 
@@ -39,7 +43,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     email: profile.email,
     fullName: profile.full_name,
     avatarUrl: profile.avatar_url,
-    tier: isAccessLevel(profile.subscription_tier) ? profile.subscription_tier : "free",
+    tier: isAccessLevel(effectiveTier) ? effectiveTier : isAccessLevel(profile.subscription_tier) ? profile.subscription_tier : "free",
     role: isRole(profile.role) ? profile.role : "reader",
     readingMode: isReadingMode(profile.reading_mode) ? profile.reading_mode : "scroll",
     createdAt: profile.created_at,

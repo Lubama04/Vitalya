@@ -1,5 +1,6 @@
 import "server-only"
 import { cache } from "react"
+import { createPublicClient } from "@/lib/supabase/public"
 import { createClient } from "@/lib/supabase/server"
 import { isAccessLevel, type AccessLevel } from "@/lib/constants"
 import type { Tables } from "@/types/database"
@@ -49,7 +50,7 @@ function toSummary(row: SummaryRow): ArticleSummary {
 }
 
 export const getCategories = cache(async (): Promise<Category[]> => {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from("categories")
     .select("id, name, slug, description, color")
@@ -62,7 +63,7 @@ export const getCategories = cache(async (): Promise<Category[]> => {
 })
 
 export const getCategoryBySlug = cache(async (slug: string): Promise<Category | null> => {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from("categories")
     .select("id, name, slug, description, color")
@@ -71,7 +72,7 @@ export const getCategoryBySlug = cache(async (slug: string): Promise<Category | 
   return data
 })
 
-/** Derniers articles publiés (la RLS filtre déjà les brouillons pour le public). */
+/** Derniers articles publiés (client public : la RLS ne renvoie que les articles publiés). */
 export async function getLatestArticles(options: {
   limit?: number
   categoryId?: string
@@ -79,7 +80,7 @@ export async function getLatestArticles(options: {
   page?: number
 } = {}): Promise<{ articles: ArticleSummary[]; total: number }> {
   const { limit = 12, categoryId, excludeId, page = 1 } = options
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const from = (Math.max(1, page) - 1) * limit
 
   let query = supabase
@@ -107,6 +108,7 @@ export type ArticleDetail = ArticleSummary & {
   published: boolean
   viewCount: number
   authorProfileId: string | null
+  updatedAt: string
 }
 
 export type PublicAuthor = { name: string; photo_url: string | null; bio: string | null; specialty: string | null }
@@ -114,7 +116,7 @@ export type PublicAuthor = { name: string; photo_url: string | null; bio: string
 /** Profil public d'un auteur (l'email n'est jamais lisible via l'API). */
 export const getAuthor = cache(async (id: string | null): Promise<PublicAuthor | null> => {
   if (!id) return null
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase.from("authors").select("name, photo_url, bio, specialty").eq("id", id).maybeSingle()
   return data
 })
@@ -126,10 +128,10 @@ export const getArticleBySlug = cache(async (slug: string): Promise<ArticleDetai
   const [{ data: row }, { data: body }] = await Promise.all([
     supabase
       .from("articles")
-      .select(`${SUMMARY_COLUMNS}, published, view_count, author_profile_id`)
+      .select(`${SUMMARY_COLUMNS}, published, view_count, author_profile_id, updated_at`)
       .eq("slug", slug)
       .maybeSingle()
-      .overrideTypes<SummaryRow & { published: boolean; view_count: number; author_profile_id: string | null }, { merge: false }>(),
+      .overrideTypes<SummaryRow & { published: boolean; view_count: number; author_profile_id: string | null; updated_at: string }, { merge: false }>(),
     supabase.rpc("get_article_body", { p_slug: slug }).maybeSingle(),
   ])
 
@@ -142,5 +144,6 @@ export const getArticleBySlug = cache(async (slug: string): Promise<ArticleDetai
     published: row.published,
     viewCount: row.view_count,
     authorProfileId: row.author_profile_id,
+    updatedAt: row.updated_at,
   }
 })

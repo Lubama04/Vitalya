@@ -75,7 +75,7 @@ export default async function ProfilePage({
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
       <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold tracking-wider text-orange uppercase">Mon espace</p>
+          <p className="text-sm font-semibold tracking-wider text-orange-fonce uppercase">Mon espace</p>
           <h1 className="mt-1 text-4xl font-bold text-nuit">Bonjour {viewer.fullName ?? ""} 🌿</h1>
           <p className="mt-2 text-muted-foreground">
             Membre depuis le {formatDate(viewer.createdAt)} · {ROLE_LABELS[viewer.role]}
@@ -109,7 +109,7 @@ export default async function ProfilePage({
           )}
           <div className="mt-6 flex flex-col gap-2">
             {viewer.tier !== "expert" && (
-              <Button asChild className="bg-orange text-white hover:bg-orange/90">
+              <Button asChild className="bg-orange text-nuit hover:bg-orange/90">
                 <Link href="/abonnement"><Sparkles className="size-4" /> Passer à l&apos;offre supérieure</Link>
               </Button>
             )}

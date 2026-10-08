@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button"
 import { getCategories, getLatestArticles } from "@/lib/data"
 import { PRICING, textOn } from "@/lib/constants"
 
+// Page publique mise en cache (ISR) : régénérée toutes les 5 minutes,
+// et immédiatement à chaque publication (revalidatePath dans le back-office).
+export const revalidate = 300
+
 export default async function HomePage() {
   const [{ articles }, categories] = await Promise.all([
     getLatestArticles({ limit: 7 }),
@@ -48,7 +52,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               {featured && (
-                <Button asChild size="lg" className="h-12 bg-orange px-6 text-base text-white hover:bg-orange/90">
+                <Button asChild size="lg" className="h-12 bg-orange px-6 text-base text-nuit hover:bg-orange/90">
                   <Link href={`/articles/${featured.slug}`}>
                     <BookOpen className="size-5" /> Lire le dernier article
                   </Link>
@@ -76,7 +80,7 @@ export default async function HomePage() {
               sizes="(max-width: 1024px) 80vw, 420px"
               className="relative -rotate-2 rounded-2xl shadow-2xl ring-1 ring-white/10 transition-transform duration-500 hover:rotate-0"
             />
-            <span className="absolute -top-3 -left-3 rotate-[-8deg] rounded-full bg-orange px-4 py-1.5 text-xs font-bold tracking-wider uppercase shadow-lg">
+            <span className="absolute -top-3 -left-3 rotate-[-8deg] rounded-full bg-orange px-4 py-1.5 text-xs font-bold tracking-wider text-nuit uppercase shadow-lg">
               N°01 · Avril 2026
             </span>
           </div>
@@ -87,7 +91,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="titre-une">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold tracking-wider text-orange uppercase">À la une</p>
+            <p className="text-sm font-semibold tracking-wider text-orange-fonce uppercase">À la une</p>
             <h2 id="titre-une" className="mt-1 text-4xl font-bold text-nuit">Les derniers articles</h2>
           </div>
           <Link href="/articles" className="hidden items-center gap-1 text-sm font-semibold text-vert-fonce hover:underline sm:flex">
@@ -119,7 +123,7 @@ export default async function HomePage() {
       <section className="bg-creme py-16 lg:py-20" aria-labelledby="titre-rubriques">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mb-10 text-center">
-            <p className="text-sm font-semibold tracking-wider text-orange uppercase">Explorer</p>
+            <p className="text-sm font-semibold tracking-wider text-orange-fonce uppercase">Explorer</p>
             <h2 id="titre-rubriques" className="mt-1 text-4xl font-bold text-nuit">Nos rubriques</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -133,7 +137,7 @@ export default async function HomePage() {
                 <Leaf aria-hidden className="absolute -right-4 -bottom-4 size-28 opacity-15 transition-transform duration-500 group-hover:rotate-12" />
                 <h3 className="font-heading text-2xl leading-tight font-bold">{category.name}</h3>
                 <div>
-                  <p className="text-sm opacity-85 line-clamp-3">{category.description}</p>
+                  <p className="text-sm line-clamp-3">{category.description}</p>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">
                     Lire <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                   </span>
@@ -161,7 +165,7 @@ export default async function HomePage() {
                 Dossiers complets, analyses d&apos;experts et rituels détaillés : soutenez une rédaction
                 indépendante dédiée à votre bien-être.
               </p>
-              <Button asChild size="lg" className="mt-8 h-12 bg-orange px-6 text-base text-white hover:bg-orange/90">
+              <Button asChild size="lg" className="mt-8 h-12 bg-orange px-6 text-base text-nuit hover:bg-orange/90">
                 <Link href="/abonnement">
                   <Sparkles className="size-5" /> Voir les offres
                 </Link>
@@ -176,7 +180,7 @@ export default async function HomePage() {
                   <p className="text-sm font-semibold text-white/70">{tier.name}</p>
                   <p className="mt-1 font-heading text-3xl font-bold">
                     {tier.price === 0 ? "0 €" : `${tier.price} €`}
-                    <span className="text-sm font-normal text-white/60"> /mois</span>
+                    <span className="text-sm font-normal text-white/80"> /mois</span>
                   </p>
                 </li>
               ))}

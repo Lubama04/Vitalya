@@ -14,6 +14,7 @@ type ArticleRow = {
   author_id: string | null
   author_profile_id: string | null
   category: string | null
+  notified_at: string | null
   content: string
   cover_image: string | null
   created_at: string
@@ -258,6 +259,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          notify_new_articles: boolean
           reading_mode: string
           role: string
           subscription_tier: string
@@ -269,6 +271,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          notify_new_articles?: boolean
           reading_mode?: string
           role?: string
           subscription_tier?: string
@@ -280,6 +283,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          notify_new_articles?: boolean
           reading_mode?: string
           role?: string
           subscription_tier?: string
@@ -324,6 +328,15 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          amount: number | null
+          confirmation_sent_at: string | null
+          country: string | null
+          currency: string | null
+          moneyfusion_token: string | null
+          operator: string | null
+          paid_at: string | null
+          pawapay_checkout_id: string | null
+          payment_provider: string
           created_at: string
           current_period_end: string | null
           id: string
@@ -335,6 +348,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          amount?: number | null
+          confirmation_sent_at?: string | null
+          country?: string | null
+          currency?: string | null
+          moneyfusion_token?: string | null
+          operator?: string | null
+          paid_at?: string | null
+          pawapay_checkout_id?: string | null
+          payment_provider?: string
           created_at?: string
           current_period_end?: string | null
           id?: string
@@ -346,6 +368,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          amount?: number | null
+          confirmation_sent_at?: string | null
+          country?: string | null
+          currency?: string | null
+          moneyfusion_token?: string | null
+          operator?: string | null
+          paid_at?: string | null
+          pawapay_checkout_id?: string | null
+          payment_provider?: string
           created_at?: string
           current_period_end?: string | null
           id?: string
@@ -369,6 +400,25 @@ export type Database = {
     }
     Views: { [_ in never]: never }
     Functions: {
+      attach_moneyfusion_token: { Args: { p_payment_id: string; p_token: string }; Returns: undefined }
+      confirm_payment: {
+        Args: { p_paid_amount: number; p_provider: string; p_reference: string; p_secret: string; p_status: string }
+        Returns: {
+          newly_activated: boolean
+          payment_id: string
+          period_end: string | null
+          tier: string
+          user_email: string
+          user_name: string | null
+        }[]
+      }
+      create_payment: {
+        Args: { p_country: string; p_currency: string; p_operator: string; p_provider: string; p_tier: string }
+        Returns: { amount: number; payment_id: string }[]
+      }
+      current_tier: { Args: never; Returns: string }
+      mark_payment_email_sent: { Args: { p_payment_id: string; p_secret: string }; Returns: undefined }
+      subscription_price: { Args: { p_tier: string }; Returns: number }
       admin_list_authors: {
         Args: never
         Returns: {

@@ -10,6 +10,8 @@
   --color-vert-emeraude: #1a9e6b;
   --color-vert-pale: #d6f0e6;
   --color-orange: #e8813a;
+  /* Orange accessible pour le texte sur fond clair (contraste 5,2:1) */
+  --color-orange-fonce: #ad5418;
   --color-or: #f4b942;
   --color-nuit: #1e2532;
   --color-creme: #faf7f2;

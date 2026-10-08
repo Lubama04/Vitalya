@@ -28,7 +28,7 @@ export function Paywall({ level, isAuthenticated }: { level: AccessLevel; isAuth
             nos dossiers.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-12 bg-orange px-6 text-white hover:bg-orange/90">
+            <Button asChild size="lg" className="h-12 bg-orange px-6 text-nuit hover:bg-orange/90">
               <Link href="/abonnement">Je m&apos;abonne</Link>
             </Button>
             {!isAuthenticated && (

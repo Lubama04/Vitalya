@@ -46,7 +46,7 @@ export function MobileNav({ categories }: { categories: NavCategory[] }) {
             </Link>
           ))}
           <div className="mt-6 flex flex-col gap-2 border-t pt-6">
-            <Button asChild className="bg-orange text-white hover:bg-orange/90">
+            <Button asChild className="bg-orange text-nuit hover:bg-orange/90">
               <Link href="/abonnement" onClick={close}>Découvrir les abonnements</Link>
             </Button>
           </div>

@@ -16,6 +16,7 @@ import { ProfilAuteur } from "@/components/mdx/cards"
 import { getViewer, isStaff } from "@/lib/auth"
 import { accentOnWhite, formatDate, SITE, textOn } from "@/lib/constants"
 import { getArticleBySlug, getAuthor, getLatestArticles } from "@/lib/data"
+import { siteUrl } from "@/lib/env"
 import { createClient } from "@/lib/supabase/server"
 
 type Props = { params: Promise<{ slug: string }> }
@@ -29,13 +30,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: article.title,
     description: article.subtitle ?? SITE.description,
     alternates: { canonical: `/articles/${article.slug}` },
+    // L'image de partage est générée par opengraph-image.tsx (titre, rubrique, couverture)
     openGraph: {
       type: "article",
       title: article.title,
       description: article.subtitle ?? undefined,
+      url: `/articles/${article.slug}`,
+      siteName: SITE.name,
+      locale: "fr_FR",
       publishedTime: article.publishedAt ?? undefined,
-      images: article.coverImage ? [{ url: article.coverImage }] : undefined,
+      modifiedTime: article.updatedAt,
+      section: article.category?.name,
     },
+    twitter: { card: "summary_large_image", title: article.title, description: article.subtitle ?? undefined },
     robots: article.published ? undefined : { index: false, follow: false },
   }
 }
@@ -54,16 +61,31 @@ export default async function ArticlePage({ params }: Props) {
   ])
 
   // Données structurées pour le référencement
+  const absolute = (path: string) => (path.startsWith("http") ? path : `${siteUrl}${path}`)
+  const articleUrl = `${siteUrl}/articles/${article.slug}`
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: article.title,
-    description: article.subtitle,
-    datePublished: article.publishedAt,
-    image: article.coverImage ? [article.coverImage] : undefined,
+    description: article.subtitle ?? undefined,
+    url: articleUrl,
+    mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
+    datePublished: article.publishedAt ?? undefined,
+    dateModified: article.updatedAt,
+    inLanguage: "fr",
+    articleSection: article.category?.name,
+    timeRequired: `PT${article.readingTime}M`,
+    image: [article.coverImage ? absolute(article.coverImage) : `${articleUrl}/opengraph-image`],
     isAccessibleForFree: article.accessLevel === "free",
-    author: author ? { "@type": "Person", name: author.name } : undefined,
-    publisher: { "@type": "Organization", name: SITE.name },
+    author: author
+      ? { "@type": "Person", name: author.name, jobTitle: author.specialty ?? undefined, image: author.photo_url ? absolute(author.photo_url) : undefined }
+      : { "@type": "Organization", name: SITE.name, url: siteUrl },
+    publisher: {
+      "@type": "Organization",
+      name: SITE.name,
+      url: siteUrl,
+      logo: { "@type": "ImageObject", url: `${siteUrl}/icons/icon-512.png`, width: 512, height: 512 },
+    },
   }
 
   return (

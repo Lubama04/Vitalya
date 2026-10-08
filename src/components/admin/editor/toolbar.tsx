@@ -124,7 +124,7 @@ export function EditorToolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button type="button" size="sm" className="h-8 gap-1 bg-orange px-3 text-white hover:bg-orange/90" aria-label="Insérer un bloc">
+              <Button type="button" size="sm" className="h-8 gap-1 bg-orange px-3 text-nuit hover:bg-orange/90" aria-label="Insérer un bloc">
                 <Plus className="size-4" /> Insérer
               </Button>
             </DropdownMenuTrigger>

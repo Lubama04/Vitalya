@@ -20,7 +20,7 @@ export default async function ArticlesPage({
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
       <header className="mb-12 max-w-2xl">
-        <p className="text-sm font-semibold tracking-wider text-orange uppercase">Le magazine</p>
+        <p className="text-sm font-semibold tracking-wider text-orange-fonce uppercase">Le magazine</p>
         <h1 className="mt-1 text-5xl font-bold text-nuit">Tous les articles</h1>
         <p className="mt-4 text-lg text-muted-foreground">
           Conseils, enquêtes et rituels pour vivre mieux, naturellement.

@@ -1,14 +1,18 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import dynamic from "next/dynamic"
 import { BookOpen, History, ScrollText, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { ReadingMode } from "@/lib/constants"
 import { cn } from "@/lib/utils"
-import { BookReader, type BookMeta } from "./book-reader"
+import type { BookMeta } from "./book-reader"
 import { createPositionSaver, loadPosition, persistMode, readLocalMode } from "./persistence"
-import { PassageShare } from "./passage-share"
 import { ScrollReader } from "./scroll-reader"
+
+// Chargés à la demande : le mode livre n'est téléchargé qu'à son ouverture
+const BookReader = dynamic(() => import("./book-reader").then((mod) => mod.BookReader), { ssr: false })
+const PassageShare = dynamic(() => import("./passage-share").then((mod) => mod.PassageShare), { ssr: false })
 
 // Position minimale / maximale pour proposer une reprise
 const RESUME_MIN = 0.04
@@ -255,7 +259,7 @@ export function ArticleReader({
                 scrollToProgress(scrollResume)
                 setScrollResume(null)
               }}
-              className="rounded-full bg-orange px-3 py-1 text-xs font-semibold hover:bg-orange/90"
+              className="rounded-full bg-orange px-3 py-1 text-xs font-semibold text-nuit hover:bg-orange/90"
             >
               Reprendre depuis ici
             </button>

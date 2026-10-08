@@ -1,3 +1,4 @@
+import Image from "next/image"
 import { FlaskConical, Globe2, Leaf, ScrollText, Sprout, TriangleAlert } from "lucide-react"
 import { isAllowedMediaUrl } from "@/lib/mdx/urls"
 import { cn } from "@/lib/utils"
@@ -114,15 +115,14 @@ export function ProfilAuteur({ author, className }: { author: AuthorProfile; cla
   return (
     <aside className={cn("my-12 flex flex-col gap-5 rounded-3xl border bg-creme/70 p-6 sm:flex-row sm:items-center sm:p-7", className)} aria-label="À propos de l'auteur">
       {isAllowedMediaUrl(author.photo_url) ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={author.photo_url} alt="" className="size-20 shrink-0 rounded-full object-cover ring-4 ring-white" loading="lazy" />
+        <Image src={author.photo_url} alt="" width={80} height={80} className="size-20 shrink-0 rounded-full object-cover ring-4 ring-white" />
       ) : (
         <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-vert-fonce font-heading text-2xl font-bold text-or ring-4 ring-white">
           {initials(author.name)}
         </span>
       )}
       <div className="min-w-0">
-        <p className="m-0 text-[0.65rem] font-bold tracking-[0.25em] text-orange uppercase">Écrit par</p>
+        <p className="m-0 text-[0.65rem] font-bold tracking-[0.25em] text-orange-fonce uppercase">Écrit par</p>
         <p className="m-0 font-heading text-2xl font-bold text-nuit">{author.name}</p>
         {author.specialty && <p className="m-0 text-sm font-medium text-vert-fonce">{author.specialty}</p>}
         {author.bio && <p className="m-0 mt-2 text-sm leading-relaxed text-nuit/75">{author.bio}</p>}

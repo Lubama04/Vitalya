@@ -154,7 +154,8 @@ export function textOn(background: string): string {
 /** Couleur d'accent lisible sur fond blanc (assombrit les couleurs trop claires). */
 export function accentOnWhite(color: string): string {
   if (color.toUpperCase() === "#F4B942") return "#A86F00"
-  if (color.toUpperCase() === "#E8813A") return "#C2601B"
+  if (color.toUpperCase() === "#E8813A") return "#AD5418"
+  if (color.toUpperCase() === "#1A9E6B") return "#13805A"
   return color
 }
 

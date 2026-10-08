@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
+import { useCallback, useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { Loader2, MessageCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -8,7 +8,7 @@ import { addComment, deleteComment } from "@/actions/engagement"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { createClient } from "@/lib/supabase/client"
+import { loadSupabase } from "@/lib/supabase/lazy"
 
 export type CommentItem = {
   id: string
@@ -49,30 +49,44 @@ export function Comments({
   viewerId: string | null
   canModerate: boolean
 }) {
-  const supabase = useMemo(() => createClient(), [])
   const [comments, setComments] = useState(initialComments)
   const [content, setContent] = useState("")
   const [pending, startTransition] = useTransition()
 
   const refresh = useCallback(async () => {
+    const supabase = await loadSupabase()
     const { data } = await supabase.rpc("get_article_comments", { p_article_id: articleId })
     if (data) setComments(data)
-  }, [supabase, articleId])
+  }, [articleId])
 
   // Temps réel : rechargement à chaque nouveau commentaire / suppression
+  // (client chargé après l'affichage, lorsque le navigateur est inactif)
   useEffect(() => {
-    const channel = supabase
-      .channel(`comments:${articleId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "comments", filter: `article_id=eq.${articleId}` },
-        () => void refresh(),
-      )
-      .subscribe()
+    let cancelled = false
+    let cleanup: (() => void) | undefined
+    const start = () =>
+      void loadSupabase().then((supabase) => {
+        if (cancelled) return
+        const channel = supabase
+          .channel(`comments:${articleId}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "comments", filter: `article_id=eq.${articleId}` },
+            () => void refresh(),
+          )
+          .subscribe()
+        cleanup = () => void supabase.removeChannel(channel)
+      })
+    // requestIdleCallback absent de certains Safari : repli sur un délai simple
+    const idleApi = window.requestIdleCallback as typeof window.requestIdleCallback | undefined
+    const handle = idleApi ? idleApi(start, { timeout: 4000 }) : window.setTimeout(start, 2000)
     return () => {
-      void supabase.removeChannel(channel)
+      cancelled = true
+      if (idleApi) window.cancelIdleCallback(handle)
+      else window.clearTimeout(handle)
+      cleanup?.()
     }
-  }, [supabase, articleId, refresh])
+  }, [articleId, refresh])
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

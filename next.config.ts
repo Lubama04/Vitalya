@@ -70,6 +70,8 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Import ciblé des primitives Radix (le paquet « radix-ui » regroupe tout dans un seul point d'entrée)
+  experimental: { optimizePackageImports: ["radix-ui"] },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: supabaseHost

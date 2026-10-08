@@ -1,7 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react"
+import dynamic from "next/dynamic"
 import { compileMDX } from "next-mdx-remote/rsc"
 import { ALireSuite, type MdxArticleContext } from "@/components/mdx/a-lire-suite"
-import { AvantApres } from "@/components/mdx/avant-apres"
 import {
   ARetenir,
   AvisExpert,
@@ -21,8 +21,6 @@ import {
   type TocHeading,
 } from "@/components/mdx/editorial"
 import { Figure, Galerie, HeroSection, Infographie, MediaText, SafeImage, Video, YouTube } from "@/components/mdx/media"
-import { Accordeon, Etape, Onglet, Onglets, Timeline } from "@/components/mdx/interactive"
-import { AudioLecteur, Question, Quiz, Reponse, Sondage, SondageOption } from "@/components/mdx/engagement"
 import { FicheIngredient } from "@/components/mdx/cards"
 import {
   CitationForte,
@@ -35,6 +33,21 @@ import {
   TitreEditorial,
 } from "@/components/mdx/typography"
 import { headingId, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
+
+// Composants interactifs (client) chargés à la demande : leur JavaScript n'est
+// téléchargé que par les articles qui les utilisent. Rendu serveur conservé (SEO).
+const AvantApres = dynamic(() => import("@/components/mdx/avant-apres").then((mod) => mod.AvantApres))
+const Accordeon = dynamic(() => import("@/components/mdx/interactive").then((mod) => mod.Accordeon))
+const Onglets = dynamic(() => import("@/components/mdx/interactive").then((mod) => mod.Onglets))
+const Onglet = dynamic(() => import("@/components/mdx/interactive").then((mod) => mod.Onglet))
+const Timeline = dynamic(() => import("@/components/mdx/interactive").then((mod) => mod.Timeline))
+const Etape = dynamic(() => import("@/components/mdx/interactive").then((mod) => mod.Etape))
+const Quiz = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.Quiz))
+const Question = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.Question))
+const Reponse = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.Reponse))
+const Sondage = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.Sondage))
+const SondageOption = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.SondageOption))
+const AudioLecteur = dynamic(() => import("@/components/mdx/engagement").then((mod) => mod.AudioLecteur))
 
 // ═══════════════════════════════════════════════════════════════
 // LISTE BLANCHE MDX

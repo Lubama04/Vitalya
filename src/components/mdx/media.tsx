@@ -1,3 +1,4 @@
+import Image from "next/image"
 import type { ReactNode } from "react"
 import { ImageOff } from "lucide-react"
 import { isAllowedMediaUrl, parseYouTubeId } from "@/lib/mdx/urls"
@@ -17,8 +18,9 @@ function MediaRefused({ label }: { label: string }) {
 /** Image Markdown ![alt](url) : rendue uniquement si hébergée par Vitalya. */
 export function SafeImage({ src, alt }: { src?: unknown; alt?: string }) {
   if (!isAllowedMediaUrl(src)) return null
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt ?? ""} loading="lazy" decoding="async" className="my-8 w-full rounded-2xl" />
+  return (
+    <Image src={src} alt={alt ?? ""} width={1600} height={1000} sizes="(max-width: 768px) 100vw, 720px" className="my-8 h-auto w-full rounded-2xl" />
+  )
 }
 
 type FigureProps = { src?: string; alt?: string; legende?: string; credit?: string; taille?: string }
@@ -28,8 +30,14 @@ export function Figure({ src, alt, legende, credit, taille }: FigureProps) {
   const large = taille === "large" || taille === "pleine"
   return (
     <figure className={cn("my-10", large && "lg:-mx-24", taille === "pleine" && "pleine-largeur lg:mx-0")}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt ?? ""} loading="lazy" decoding="async" className={cn("w-full", taille !== "pleine" && "rounded-2xl")} />
+      <Image
+        src={src}
+        alt={alt ?? ""}
+        width={1600}
+        height={1000}
+        sizes={taille === "pleine" ? "100vw" : large ? "(max-width: 1024px) 100vw, 960px" : "(max-width: 768px) 100vw, 720px"}
+        className={cn("h-auto w-full", taille !== "pleine" && "rounded-2xl")}
+      />
       {(legende || credit) && (
         <figcaption className="mx-auto mt-3 max-w-3xl px-4 text-center text-sm text-muted-foreground sm:px-0">
           {legende}
@@ -80,8 +88,15 @@ export function Galerie({ images, legende }: { images?: string; legende?: string
       <div className={cn("grid gap-3", items.length === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
         {items.map((image, index) => (
           <div key={`${image.src}-${index}`} className={cn("group relative overflow-hidden rounded-xl", items.length >= 5 && index === 0 && "sm:col-span-2 sm:row-span-2")}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image.src} alt={image.alt ?? ""} loading="lazy" decoding="async" className="aspect-square size-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <div className="relative aspect-square">
+              <Image
+                src={image.src}
+                alt={image.alt ?? ""}
+                fill
+                sizes="(max-width: 640px) 50vw, 300px"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
             {image.legende && (
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-nuit/80 to-transparent px-3 pt-6 pb-2 text-xs text-white">
                 {image.legende}
@@ -153,15 +168,13 @@ export function MediaText({
   children?: ReactNode
 }) {
   if (!isAllowedMediaUrl(src)) return <div>{children}</div>
-  // eslint-disable-next-line @next/next/no-img-element
-  const image = <img src={src} alt={alt ?? ""} loading="lazy" decoding="async" className="size-full rounded-2xl object-cover" />
+  const image = <Image src={src} alt={alt ?? ""} fill sizes="(max-width: 768px) 100vw, 480px" className="rounded-2xl object-cover" />
   const text = <div className="space-y-4 [&>*:first-child]:mt-0">{children}</div>
 
   if (variante === "image-fond") {
     return (
       <section className="pleine-largeur relative my-14 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt ?? ""} loading="lazy" className="absolute inset-0 size-full object-cover" />
+        <Image src={src} alt={alt ?? ""} fill sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-nuit/65" />
         <div className="relative mx-auto max-w-3xl space-y-4 px-4 py-20 text-white sm:px-6 [&_h2]:text-white [&_h3]:text-or [&_strong]:text-or">
           {children}
@@ -174,7 +187,7 @@ export function MediaText({
       <section className="my-10 space-y-6">
         {text}
         <figure>
-          <div className="aspect-[16/9]">{image}</div>
+          <div className="relative aspect-[16/9]">{image}</div>
           {legende && <figcaption className="mt-2 text-center text-sm text-muted-foreground">{legende}</figcaption>}
         </figure>
       </section>
@@ -183,7 +196,7 @@ export function MediaText({
   const imageFirst = variante !== "texte-image"
   return (
     <section className="my-12 grid items-center gap-8 md:grid-cols-2 lg:-mx-16">
-      <figure className={cn("aspect-[4/5]", !imageFirst && "md:order-2")}>
+      <figure className={cn("relative aspect-[4/5]", !imageFirst && "md:order-2")}>
         {image}
         {legende && <figcaption className="mt-2 text-center text-sm text-muted-foreground">{legende}</figcaption>}
       </figure>
@@ -207,8 +220,7 @@ export function HeroSection({
   return (
     <section className="pleine-largeur relative my-16 flex min-h-[min(60vh,640px)] items-end overflow-hidden bg-vert-fonce text-white">
       {isAllowedMediaUrl(src) && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+        <Image src={src} alt="" fill sizes="100vw" className="object-cover" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-nuit via-nuit/50 to-transparent" />
       <div className="relative mx-auto w-full max-w-3xl px-4 py-14 sm:px-6">

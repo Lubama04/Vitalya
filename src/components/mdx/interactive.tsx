@@ -180,7 +180,7 @@ export function Timeline({ titre, children }: { titre?: string; children?: React
 
   return (
     <section className="timeline my-12" aria-label={titre ?? "Frise chronologique"}>
-      {titre && <p className="mb-6 text-sm font-bold tracking-wider text-orange uppercase">{titre}</p>}
+      {titre && <p className="mb-6 text-sm font-bold tracking-wider text-orange-fonce uppercase">{titre}</p>}
       <ol className="relative m-0! list-none! p-0! before:absolute before:top-2 before:bottom-2 before:left-[0.53rem] before:w-0.5 before:rounded-full before:bg-gradient-to-b before:from-vert-fonce before:via-orange before:to-vert-emeraude">
         {children}
       </ol>

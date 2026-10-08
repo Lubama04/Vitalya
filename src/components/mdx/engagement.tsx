@@ -87,7 +87,7 @@ export function Quiz({ titre, children }: { titre?: string; children?: ReactNode
           return (
             <li key={qIndex} className="m-0!">
               <p className="m-0! mb-3! font-semibold text-nuit">
-                <span className="mr-2 text-orange">{qIndex + 1}.</span>
+                <span className="mr-2 text-orange-fonce">{qIndex + 1}.</span>
                 {question.texte}
               </p>
               <div className="grid gap-2" role="group" aria-label={`Réponses à la question ${qIndex + 1}`}>
@@ -241,7 +241,7 @@ export function Sondage({ question, articleId, children }: { question?: string; 
 
   return (
     <section className="sondage my-12 rounded-3xl border bg-gradient-to-br from-vert-pale/50 to-white p-6 sm:p-8" aria-label="Sondage">
-      <p className="m-0! mb-1! flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-orange uppercase">
+      <p className="m-0! mb-1! flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-orange-fonce uppercase">
         <Vote className="size-4" aria-hidden /> Sondage
       </p>
       <p className="m-0! mb-5! font-heading text-xl font-bold text-nuit">{question}</p>

@@ -54,7 +54,7 @@ export function NewsletterComposer({ subscribers, emailEnabled }: { subscribers:
           name="mode"
           value="envoi"
           disabled={pending || !emailEnabled || subscribers === 0}
-          className="bg-orange text-white hover:bg-orange/90"
+          className="bg-orange text-nuit hover:bg-orange/90"
           onClick={(event) => {
             if (!window.confirm(`Envoyer cette newsletter à ${subscribers} abonné·e·s ?`)) event.preventDefault()
           }}

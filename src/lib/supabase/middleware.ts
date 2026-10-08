@@ -8,6 +8,22 @@ const PROTECTED_PREFIXES = ["/profil", "/admin"]
 
 /** Rafraîchit la session Supabase et protège les routes privées. */
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const isProtected = PROTECTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  )
+
+  // Visiteur sans cookie de session Supabase : rien à rafraîchir, aucun appel réseau
+  const hasSessionCookie = request.cookies.getAll().some((cookie) => cookie.name.startsWith("sb-"))
+  if (!hasSessionCookie) {
+    if (!isProtected) return NextResponse.next({ request })
+    const url = request.nextUrl.clone()
+    url.pathname = "/auth"
+    url.search = ""
+    url.searchParams.set("next", pathname)
+    return NextResponse.redirect(url)
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -33,11 +49,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
-  const isProtected = PROTECTED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
-  )
 
   if (isProtected && !user) {
     const url = request.nextUrl.clone()

@@ -1,3 +1,4 @@
+import Image from "next/image"
 import type { ReactNode } from "react"
 import Link from "next/link"
 import {
@@ -229,8 +230,7 @@ export function AvisExpert({
       </blockquote>
       <div className="mt-6 flex items-center gap-4">
         {isAllowedMediaUrl(photo) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" className="size-14 rounded-full object-cover ring-2 ring-or" loading="lazy" />
+          <Image src={photo} alt="" width={56} height={56} className="size-14 rounded-full object-cover ring-2 ring-or" />
         ) : (
           <span className="flex size-14 items-center justify-center rounded-full bg-or font-heading text-lg font-bold text-nuit">
             {initials(nom ?? "?")}
@@ -294,7 +294,7 @@ export function BoutonCTA({ href, texte, variante }: { href?: string; texte?: st
   const external = isExternalHref(href)
   const className = cn(
     "not-prose inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-base font-semibold no-underline! shadow-sm transition-transform hover:-translate-y-0.5",
-    variante === "secondaire" ? "border-2 border-vert-fonce text-vert-fonce! bg-white" : variante === "vert" ? "bg-vert-fonce text-white!" : "bg-orange text-white!",
+    variante === "secondaire" ? "border-2 border-vert-fonce text-vert-fonce! bg-white" : variante === "vert" ? "bg-vert-fonce text-white!" : "bg-orange text-nuit!",
   )
   const content = (
     <>

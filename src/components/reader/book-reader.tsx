@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight, Clock, Maximize2, Minimize2, RotateCcw, X } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -325,8 +326,7 @@ export function BookReader({
               <section className="livre-titre flex h-full flex-col justify-end">
                 {meta.coverImage && (
                   <div className="relative mb-6 min-h-0 flex-1 overflow-hidden rounded-xl bg-vert-pale">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={meta.coverImage} alt="" className="absolute inset-0 size-full max-h-none! object-cover" />
+                    <Image src={meta.coverImage} alt="" fill sizes="720px" className="max-h-none! object-cover" />
                   </div>
                 )}
                 {meta.category && (

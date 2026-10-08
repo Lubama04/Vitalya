@@ -37,7 +37,7 @@ export default async function PricingPage() {
   return (
     <div className="bg-creme">
       <section className="mx-auto max-w-7xl px-4 pt-16 pb-8 text-center sm:px-6 lg:pt-20">
-        <p className="text-sm font-semibold tracking-wider text-orange uppercase">Abonnements</p>
+        <p className="text-sm font-semibold tracking-wider text-orange-fonce uppercase">Abonnements</p>
         <h1 className="mx-auto mt-2 max-w-3xl text-5xl font-bold text-nuit sm:text-6xl">
           Prenez soin de vous, <span className="text-vert-fonce italic">pleinement</span>
         </h1>
@@ -66,7 +66,7 @@ export default async function PricingPage() {
               )}
             >
               {tier.highlighted && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-orange px-4 py-1 text-xs font-bold tracking-wider text-white uppercase">
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-orange px-4 py-1 text-xs font-bold tracking-wider text-nuit uppercase">
                   Le plus choisi
                 </span>
               )}

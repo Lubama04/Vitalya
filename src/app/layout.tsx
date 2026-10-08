@@ -10,10 +10,8 @@ import {
 } from "next/font/google"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
-import { InstallBanner } from "@/components/pwa/install-banner"
+import { ClientExtras } from "@/components/client-extras"
 import { INSTALL_CAPTURE_SCRIPT } from "@/components/pwa/install-capture"
-import { UpdateManager } from "@/components/pwa/update-manager"
-import { Toaster } from "@/components/ui/sonner"
 import { SITE } from "@/lib/constants"
 import { siteUrl } from "@/lib/env"
 import "./globals.css"
@@ -28,7 +26,7 @@ const playfair = Playfair_Display({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-playfair",
-  weight: ["400", "600", "700", "800"],
+  // Police variable : un seul fichier par style au lieu d'un par graisse
   style: ["normal", "italic"],
 })
 
@@ -115,9 +113,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           {children}
         </main>
         <SiteFooter />
-        <Toaster position="top-center" richColors />
-        <InstallBanner />
-        <UpdateManager />
+        <ClientExtras />
       </body>
     </html>
   )

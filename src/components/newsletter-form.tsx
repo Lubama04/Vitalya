@@ -34,7 +34,7 @@ export function NewsletterForm({ variant = "light" }: { variant?: "light" | "dar
         />
         {/* Champ piège anti-robots, invisible pour les humains */}
         <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
-        <Button type="submit" disabled={pending} className="h-11 shrink-0 bg-orange text-white hover:bg-orange/90">
+        <Button type="submit" disabled={pending} className="h-11 shrink-0 bg-orange text-nuit hover:bg-orange/90">
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           <span className="sr-only sm:not-sr-only">S&apos;inscrire</span>
         </Button>

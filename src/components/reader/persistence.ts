@@ -1,6 +1,6 @@
 import { setReadingMode } from "@/actions/profile"
 import { isReadingMode, type ReadingMode } from "@/lib/constants"
-import { createClient } from "@/lib/supabase/client"
+import { loadSupabase } from "@/lib/supabase/lazy"
 
 // ═══════════════════════════════════════════════════════════════
 // Persistance du lecteur
@@ -66,7 +66,8 @@ export async function loadPosition(articleId: string, userId: string | null): Pr
   const local = parseLocal(articleId)
   if (!userId) return local
 
-  const { data } = await createClient()
+  const supabase = await loadSupabase()
+  const { data } = await supabase
     .from("reading_positions")
     .select("progress, page, mode, updated_at")
     .eq("article_id", articleId)
@@ -93,7 +94,8 @@ export function createPositionSaver(articleId: string, userId: string | null) {
     if (!userId || !pending) return
     const position = pending
     pending = null
-    void createClient()
+    void loadSupabase().then((supabase) =>
+      supabase
       .from("reading_positions")
       .upsert(
         {
@@ -105,7 +107,8 @@ export function createPositionSaver(articleId: string, userId: string | null) {
         },
         { onConflict: "user_id,article_id" },
       )
-      .then(() => undefined)
+      .then(() => undefined),
+    )
   }
 
   return {

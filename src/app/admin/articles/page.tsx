@@ -34,7 +34,7 @@ export default async function AdminArticlesPage() {
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-nuit">Articles</h1>
-        <Button asChild className="bg-orange text-white hover:bg-orange/90">
+        <Button asChild className="bg-orange text-nuit hover:bg-orange/90">
           <Link href="/admin/articles/nouveau"><PenLine className="size-4" /> Nouvel article</Link>
         </Button>
       </header>

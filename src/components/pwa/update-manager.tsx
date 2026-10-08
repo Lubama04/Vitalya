@@ -138,7 +138,7 @@ export function UpdateManager() {
           type="button"
           onClick={() => applyUpdate(waiting)}
           disabled={applying}
-          className="shrink-0 rounded-full bg-orange px-3.5 py-1.5 text-xs font-semibold transition-colors hover:bg-orange/90 disabled:opacity-70"
+          className="shrink-0 rounded-full bg-orange px-3.5 py-1.5 text-xs font-semibold text-nuit transition-colors hover:bg-orange/90 disabled:opacity-70"
         >
           {applying ? "Installation…" : "Installer maintenant"}
         </button>

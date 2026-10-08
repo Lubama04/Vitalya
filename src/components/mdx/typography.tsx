@@ -25,7 +25,7 @@ function typoStyle(police?: string, couleur?: string): CSSProperties | undefined
 export function TitreEditorial({ children, police, couleur, id, surtitre }: TypoProps & { surtitre?: string }) {
   return (
     <header className="mt-16 mb-8">
-      {surtitre && <p className="mb-3 text-xs font-bold tracking-[0.25em] text-orange uppercase">{surtitre}</p>}
+      {surtitre && <p className="mb-3 text-xs font-bold tracking-[0.25em] text-orange-fonce uppercase">{surtitre}</p>}
       <h2 id={id} className="m-0! scroll-mt-28 font-heading text-4xl leading-[1.08] font-bold text-balance text-nuit sm:text-5xl" style={typoStyle(police, couleur)}>
         {children}
       </h2>

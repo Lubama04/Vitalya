@@ -229,7 +229,7 @@ export function InsertDialog({
               <div key={field.name} className="space-y-1.5">
                 <Label htmlFor={id}>
                   {field.label}
-                  {field.required && <span className="text-orange"> *</span>}
+                  {field.required && <span className="text-orange-fonce"> *</span>}
                 </Label>
                 {field.kind === "textarea" ? (
                   <Textarea id={id} value={value} rows={4} placeholder={field.placeholder} onChange={(event) => set(field.name, event.target.value)} />

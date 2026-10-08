@@ -27,7 +27,7 @@ export function PricingButton({
         size="lg"
         className={cn(
           "h-12 w-full text-base",
-          highlighted ? "bg-orange text-white hover:bg-orange/90" : "bg-vert-fonce hover:bg-vert-fonce/90",
+          highlighted ? "bg-orange text-nuit hover:bg-orange/90" : "bg-vert-fonce hover:bg-vert-fonce/90",
         )}
       >
         {pending && <Loader2 className="size-4 animate-spin" />} {label}

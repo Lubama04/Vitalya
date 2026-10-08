@@ -19,7 +19,7 @@ export async function ALireSuite({ titre, context }: { titre?: string; context: 
 
   return (
     <aside className="my-12 rounded-2xl border bg-creme/60 p-6" aria-label={titre ?? "À lire ensuite"}>
-      <p className="mb-5 font-sans text-sm font-bold tracking-wider text-orange uppercase">{titre ?? "À lire ensuite"}</p>
+      <p className="mb-5 font-sans text-sm font-bold tracking-wider text-orange-fonce uppercase">{titre ?? "À lire ensuite"}</p>
       <div className="space-y-5 [&_a]:no-underline! [&_h3]:mt-0!">
         {articles.map((article) => (
           <ArticleCard key={article.id} article={article} variant="compact" />

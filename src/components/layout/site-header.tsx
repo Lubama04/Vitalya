@@ -1,13 +1,12 @@
 import Image from "next/image"
 import Link from "next/link"
-import { getViewer, isStaff } from "@/lib/auth"
 import { getCategories } from "@/lib/data"
-import { Button } from "@/components/ui/button"
+import { HeaderAccount } from "@/components/layout/header-account"
 import { MobileNav } from "@/components/layout/mobile-nav"
-import { UserMenu } from "@/components/layout/user-menu"
 
 export async function SiteHeader() {
-  const [viewer, categories] = await Promise.all([getViewer(), getCategories()])
+  // Aucune lecture de cookies ici : l'en-tête reste compatible avec le cache des pages
+  const categories = await getCategories()
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-white/90 backdrop-blur-md supports-[backdrop-filter]:bg-white/75">
@@ -46,24 +45,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {viewer ? (
-            <UserMenu
-              name={viewer.fullName ?? viewer.email}
-              email={viewer.email}
-              avatarUrl={viewer.avatarUrl}
-              tier={viewer.tier}
-              isStaff={isStaff(viewer)}
-            />
-          ) : (
-            <>
-              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-                <Link href="/auth">Connexion</Link>
-              </Button>
-              <Button asChild size="sm" className="bg-orange text-white hover:bg-orange/90">
-                <Link href="/abonnement">S&apos;abonner</Link>
-              </Button>
-            </>
-          )}
+          <HeaderAccount />
         </div>
       </div>
     </header>
