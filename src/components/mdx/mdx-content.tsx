@@ -21,6 +21,17 @@ import {
   type TocHeading,
 } from "@/components/mdx/editorial"
 import { Figure, Galerie, HeroSection, Infographie, MediaText, SafeImage, Video, YouTube } from "@/components/mdx/media"
+import { Accordeon, Etape, Onglet, Onglets, Timeline } from "@/components/mdx/interactive"
+import {
+  CitationForte,
+  Couleur,
+  GrandIntertitre,
+  IntertitreElegant,
+  Legende,
+  MiseEnAvant,
+  NoteBas,
+  TitreEditorial,
+} from "@/components/mdx/typography"
 import { headingId, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
 
 // ═══════════════════════════════════════════════════════════════
@@ -30,10 +41,24 @@ import { headingId, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
 // d'événement, imports/exports, expressions JS) est supprimé.
 // ═══════════════════════════════════════════════════════════════
 export const MDX_ALLOWLIST: Record<string, readonly string[]> = {
-  // Texte
-  Chapeau: [],
+  // Texte et styles typographiques
+  Chapeau: ["police", "couleur"],
   Lettrine: [],
   Citation: ["auteur", "fonction"],
+  TitreEditorial: ["surtitre", "police", "couleur"],
+  GrandIntertitre: ["police", "couleur"],
+  IntertitreElegant: ["police", "couleur"],
+  CitationForte: ["auteur", "police", "couleur"],
+  MiseEnAvant: ["police", "couleur"],
+  Legende: ["couleur"],
+  NoteBas: ["couleur"],
+  Couleur: ["valeur"],
+  // Interactif
+  Accordeon: ["question", "ouvert"],
+  Onglets: [],
+  Onglet: ["titre"],
+  Timeline: ["titre"],
+  Etape: ["date", "titre"],
   // Information
   Encart: ["titre"],
   ARetenir: ["titre"],
@@ -100,7 +125,7 @@ function toStringValue(attribute: MdAttribute): string | null {
 }
 
 // Seuls ces composants peuvent vivre au milieu d'une phrase
-const INLINE_COMPONENTS = new Set(["Ref"])
+const INLINE_COMPONENTS = new Set(["Ref", "Couleur"])
 
 /**
  * Un composant de bloc écrit au milieu d'un paragraphe (<p>…<Encart/>…</p>)
@@ -161,7 +186,10 @@ function textOf(node: MdNode): string {
   return (node.children ?? []).map(textOf).join("")
 }
 
-/** Ajoute une ancre aux intertitres H2/H3 et alimente le sommaire. */
+// Composants de titre : rendus en h2 / h3, ils entrent dans le sommaire
+const HEADING_COMPONENTS: Record<string, 2 | 3> = { TitreEditorial: 2, GrandIntertitre: 2, IntertitreElegant: 3 }
+
+/** Ajoute une ancre aux intertitres H2/H3 (Markdown et composants) et alimente le sommaire. */
 function remarkHeadings(headings: TocHeading[]) {
   return () => (tree: MdNode) => {
     const used = new Map<string, number>()
@@ -171,6 +199,14 @@ function remarkHeadings(headings: TocHeading[]) {
         const id = headingId(text, used)
         node.data = { ...node.data, hProperties: { ...node.data?.hProperties, id } }
         headings.push({ id, text, depth: node.depth })
+      }
+      const componentDepth = node.type === "mdxJsxFlowElement" && node.name ? HEADING_COMPONENTS[node.name] : undefined
+      if (componentDepth) {
+        const text = textOf(node).trim()
+        const id = headingId(text, used)
+        // Attribut interne ajouté après la liste blanche : identifiant calculé, jamais saisi
+        node.attributes = [...(node.attributes ?? []), { type: "mdxJsxAttribute", name: "id", value: id }]
+        headings.push({ id, text, depth: componentDepth })
       }
       node.children?.forEach(visit)
     }
@@ -204,6 +240,19 @@ export async function MdxContent({
     Chapeau,
     Lettrine,
     Citation,
+    TitreEditorial,
+    GrandIntertitre,
+    IntertitreElegant,
+    CitationForte,
+    MiseEnAvant,
+    Legende,
+    NoteBas,
+    Couleur,
+    Accordeon,
+    Onglets,
+    Onglet,
+    Timeline,
+    Etape,
     Encart,
     ARetenir,
     Avertissement,

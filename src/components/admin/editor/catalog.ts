@@ -28,8 +28,19 @@ import {
   TriangleAlert,
   SquarePlay as Youtube,
   ChartColumnBig,
+  ChevronsUpDown,
+  GitCommitVertical,
+  Heading1,
+  Highlighter,
+  Captions,
+  MessageSquareQuote,
+  PanelsTopLeft,
+  Sparkle,
+  StickyNote,
+  Type,
 } from "lucide-react"
 import { parseYouTubeId } from "@/lib/mdx/urls"
+import { COLOR_OPTIONS, FONT_OPTIONS } from "@/lib/mdx/typo"
 
 // ═══════════════════════════════════════════════════════════════
 // Catalogue des insertions de l'éditeur (menu « + »).
@@ -94,6 +105,32 @@ export function text(value: string): string {
 
 const block = (body: string) => `\n\n${body}\n\n`
 
+// ─── Police et couleur (référentiel Vitalya) ───────────────────
+
+const POLICE_FIELD: DialogField = {
+  name: "police",
+  label: "Police",
+  kind: "select",
+  defaultValue: "playfair",
+  options: FONT_OPTIONS,
+  help: "Six polices éditoriales Google Fonts sélectionnées pour Vitalya.",
+}
+
+const COULEUR_FIELD: DialogField = {
+  name: "couleur",
+  label: "Couleur du texte",
+  kind: "select",
+  defaultValue: "",
+  options: COLOR_OPTIONS,
+}
+
+/** Attributs police / couleur (omis quand ils valent la valeur par défaut). */
+function styleAttrs(v: Record<string, string>, withFont = true): string {
+  const police = withFont && v.police && v.police !== "playfair" ? ` police="${attr(v.police)}"` : ""
+  const couleur = v.couleur ? ` couleur="${attr(v.couleur)}"` : ""
+  return police + couleur
+}
+
 /** Plus grand numéro de <Source n="…"> présent dans le contenu. */
 function lastSourceNumber(content: string): number {
   const numbers = [...content.matchAll(/<Source[^>]*\bn="(\d+)"/g)].map((match) => Number(match[1]))
@@ -134,8 +171,13 @@ export const CATALOG: CatalogGroup[] = [
         hint: "Résumé introductif de 2 à 4 phrases",
         icon: AlignLeft,
         action: {
-          kind: "snippet",
-          build: (s) => block(`<Chapeau>\n${s || `${CARET}En deux à quatre phrases, l'essentiel de l'article : le sujet, l'enjeu et ce que le lecteur va apprendre.`}\n</Chapeau>`),
+          kind: "dialog",
+          dialog: {
+            title: "Chapeau",
+            description: "En deux à quatre phrases : le sujet, l'enjeu et ce que le lecteur va apprendre.",
+            fields: [{ name: "texte", label: "Texte du chapeau", kind: "textarea", required: true }, POLICE_FIELD, COULEUR_FIELD],
+            build: (v) => block(`<Chapeau${styleAttrs(v)}>\n${text(v.texte ?? "")}\n</Chapeau>`),
+          },
         },
       },
       {
@@ -166,8 +208,170 @@ export const CATALOG: CatalogGroup[] = [
           },
         },
       },
+      {
+        id: "titre-editorial",
+        label: "Titre éditorial",
+        hint: "Grand titre d'ouverture de section, avec surtitre",
+        icon: Heading1,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Titre éditorial",
+            fields: [
+              { name: "surtitre", label: "Surtitre (facultatif)", kind: "text", placeholder: "Dossier" },
+              { name: "texte", label: "Titre", kind: "text", required: true },
+              POLICE_FIELD,
+              COULEUR_FIELD,
+            ],
+            build: (v) =>
+              block(`<TitreEditorial${v.surtitre ? ` surtitre="${attr(v.surtitre)}"` : ""}${styleAttrs(v)}>${text(v.texte ?? "")}</TitreEditorial>`),
+          },
+        },
+      },
+      {
+        id: "grand-intertitre",
+        label: "Grand intertitre",
+        hint: "Sépare les grandes parties (dans le sommaire)",
+        icon: Type,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Grand intertitre",
+            fields: [{ name: "texte", label: "Intertitre", kind: "text", required: true }, POLICE_FIELD, COULEUR_FIELD],
+            build: (v) => block(`<GrandIntertitre${styleAttrs(v)}>${text(v.texte ?? "")}</GrandIntertitre>`),
+          },
+        },
+      },
+      {
+        id: "intertitre-elegant",
+        label: "Intertitre élégant",
+        hint: "Italique fin avec filet orange (dans le sommaire)",
+        icon: Sparkle,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Intertitre élégant",
+            fields: [{ name: "texte", label: "Intertitre", kind: "text", required: true }, POLICE_FIELD, COULEUR_FIELD],
+            build: (v) => block(`<IntertitreElegant${styleAttrs(v)}>${text(v.texte ?? "")}</IntertitreElegant>`),
+          },
+        },
+      },
+      {
+        id: "citation-forte",
+        label: "Citation forte",
+        hint: "Exergue centrée, en grand",
+        icon: MessageSquareQuote,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Citation forte",
+            fields: [
+              { name: "texte", label: "Citation", kind: "textarea", required: true },
+              { name: "auteur", label: "Auteur (facultatif)", kind: "text" },
+              POLICE_FIELD,
+              COULEUR_FIELD,
+            ],
+            build: (v) =>
+              block(`<CitationForte${v.auteur ? ` auteur="${attr(v.auteur)}"` : ""}${styleAttrs(v)}>\n${text(v.texte ?? "")}\n</CitationForte>`),
+          },
+        },
+      },
+      {
+        id: "mise-en-avant",
+        label: "Mise en avant",
+        hint: "Paragraphe surligné, plus grand",
+        icon: Highlighter,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Mise en avant",
+            fields: [{ name: "texte", label: "Texte", kind: "textarea", required: true }, POLICE_FIELD, COULEUR_FIELD],
+            build: (v) => block(`<MiseEnAvant${styleAttrs(v)}>\n${text(v.texte ?? "")}\n</MiseEnAvant>`),
+          },
+        },
+      },
+      {
+        id: "legende",
+        label: "Légende",
+        hint: "Petit texte en italique sous un élément",
+        icon: Captions,
+        action: { kind: "snippet", build: (s) => block(`<Legende>${s || `${CARET}Légende de l'élément ci-dessus.`}</Legende>`) },
+      },
+      {
+        id: "note-bas",
+        label: "Note de bas",
+        hint: "Précision ou mention en fin d'article",
+        icon: StickyNote,
+        action: {
+          kind: "snippet",
+          build: (s) => block(`<NoteBas>\n${s || `${CARET}Cet article ne remplace pas l'avis d'un professionnel de santé.`}\n</NoteBas>`),
+        },
+      },
     ],
   },
+  {
+    id: "interactif",
+    label: "Interactif",
+    icon: ChevronsUpDown,
+    items: [
+      {
+        id: "accordeon",
+        label: "Accordéon / FAQ",
+        hint: "Question avec réponse dépliable",
+        icon: ChevronsUpDown,
+        action: {
+          kind: "dialog",
+          dialog: {
+            title: "Accordéon / FAQ",
+            description: "Insérez plusieurs accordéons à la suite pour composer une FAQ.",
+            fields: [
+              { name: "question", label: "Question", kind: "text", required: true },
+              { name: "texte", label: "Réponse", kind: "textarea", required: true },
+              {
+                name: "ouvert",
+                label: "À l'ouverture de la page",
+                kind: "select",
+                defaultValue: "",
+                options: [
+                  { value: "", label: "Replié" },
+                  { value: "true", label: "Déplié" },
+                ],
+              },
+            ],
+            build: (v) =>
+              block(`<Accordeon question="${attr(v.question ?? "")}"${v.ouvert ? ` ouvert="true"` : ""}>\n${text(v.texte ?? "")}\n</Accordeon>`),
+          },
+        },
+      },
+      {
+        id: "onglets",
+        label: "Onglets",
+        hint: "Contenus alternatifs dans des onglets",
+        icon: PanelsTopLeft,
+        action: {
+          kind: "snippet",
+          build: () =>
+            block(
+              `<Onglets>\n<Onglet titre="${CARET}Peau sèche">\nConseils pour la peau sèche.\n</Onglet>\n<Onglet titre="Peau mixte">\nConseils pour la peau mixte.\n</Onglet>\n<Onglet titre="Peau grasse">\nConseils pour la peau grasse.\n</Onglet>\n</Onglets>`,
+            ),
+        },
+      },
+      {
+        id: "timeline",
+        label: "Timeline",
+        hint: "Frise chronologique : date, titre, description",
+        icon: GitCommitVertical,
+        action: {
+          kind: "snippet",
+          build: () =>
+            block(
+              `<Timeline titre="${CARET}Les grandes étapes">\n<Etape date="Semaine 1" titre="Première étape">\nDescription de l'étape.\n</Etape>\n<Etape date="Semaine 2" titre="Deuxième étape">\nDescription de l'étape.\n</Etape>\n<Etape date="Semaine 4" titre="Troisième étape">\nDescription de l'étape.\n</Etape>\n</Timeline>`,
+            ),
+        },
+      },
+    ],
+  },
+
   {
     id: "information",
     label: "Information",

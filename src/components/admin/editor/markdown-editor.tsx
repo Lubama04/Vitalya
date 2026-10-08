@@ -6,11 +6,13 @@ import { toast } from "sonner"
 import { renderMdxPreview } from "@/actions/preview"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { computeReadingTime, countWords } from "@/lib/constants"
+import type { ColorKey } from "@/lib/mdx/typo"
 import { cn } from "@/lib/utils"
 import { CARET, EXTERNAL_LINK_DIALOG, IMAGE_DIALOG, INTERNAL_LINK_DIALOG, YOUTUBE_DIALOG, type CatalogItem, type DialogSpec } from "./catalog"
 // Composants clients pouvant figurer dans l'aperçu rendu par le serveur :
 // ils doivent faire partie du bundle de la page pour être hydratés.
 import "@/components/mdx/avant-apres"
+import "@/components/mdx/interactive"
 import { InsertDialog } from "./insert-dialog"
 import { EditorToolbar, type QuickAction, type ViewMode } from "./toolbar"
 
@@ -145,6 +147,17 @@ export function MarkdownEditor({
     [insert, openDialog, rememberSelection, selectedText],
   )
 
+  /** Couleur de la palette appliquée à la sélection (composant en ligne <Couleur>). */
+  const handleColor = useCallback(
+    (color: ColorKey) => {
+      window.setTimeout(() => {
+        const selection = selectedText()
+        insert(`<Couleur valeur="${color}">${selection || `${CARET}texte coloré`}</Couleur>`)
+      }, 0)
+    },
+    [insert, selectedText],
+  )
+
   const handleCatalog = useCallback(
     (item: CatalogItem) => {
       // Laisse le menu se fermer avant de reprendre le focus
@@ -183,6 +196,10 @@ export function MarkdownEditor({
       >
         <EditorToolbar
           onQuick={handleQuick}
+          onColor={(color) => {
+            rememberSelection()
+            handleColor(color)
+          }}
           onCatalog={(item) => {
             rememberSelection()
             handleCatalog(item)

@@ -163,7 +163,10 @@
 .livre-pages video,
 .livre-pages .source,
 .livre-pages .lettrine,
-.livre-pages .chapeau {
+.livre-pages .chapeau,
+.livre-pages .accordeon,
+.livre-pages .onglets,
+.livre-pages .etape {
   break-inside: avoid;
 }
 .livre-pages h2,

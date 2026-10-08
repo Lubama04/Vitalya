@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
+import {
+  Cormorant_Garamond,
+  Inter,
+  Libre_Baskerville,
+  Lora,
+  Merriweather,
+  Playfair_Display,
+  Source_Serif_4,
+} from "next/font/google"
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { InstallBanner } from "@/components/pwa/install-banner"
@@ -22,6 +30,39 @@ const playfair = Playfair_Display({
   weight: ["400", "600", "700", "800"],
   style: ["normal", "italic"],
 })
+
+// Polices éditoriales au choix du rédacteur : non préchargées, le navigateur
+// ne télécharge un fichier que si un article l'utilise réellement.
+const lora = Lora({ subsets: ["latin"], display: "swap", variable: "--font-lora", preload: false, style: ["normal", "italic"] })
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-cormorant",
+  preload: false,
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+})
+const merriweather = Merriweather({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-merriweather",
+  preload: false,
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+})
+const sourceSerif = Source_Serif_4({ subsets: ["latin"], display: "swap", variable: "--font-source-serif", preload: false, style: ["normal", "italic"] })
+const baskerville = Libre_Baskerville({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-baskerville",
+  preload: false,
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+})
+
+const fontVariables = [inter, playfair, lora, cormorant, merriweather, sourceSerif, baskerville]
+  .map((font) => font.variable)
+  .join(" ")
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -56,7 +97,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="fr" className={fontVariables}>
       <head>
         {/* Capture de l'invite d'installation PWA avant l'hydratation */}
         <script dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE_SCRIPT }} />

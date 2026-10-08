@@ -17,6 +17,7 @@ import {
   PencilLine,
   Plus,
   SquareArrowOutUpRight,
+  Palette,
   SquarePlay as Youtube,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { COLORS, type ColorKey } from "@/lib/mdx/typo"
 import { CATALOG, type CatalogItem } from "./catalog"
 
 export type ViewMode = "editeur" | "split" | "apercu"
@@ -100,6 +102,7 @@ function ToolButton({
 
 export function EditorToolbar({
   onQuick,
+  onColor,
   onCatalog,
   view,
   onViewChange,
@@ -107,6 +110,7 @@ export function EditorToolbar({
   onToggleFullscreen,
 }: {
   onQuick: (action: QuickAction) => void
+  onColor: (color: ColorKey) => void
   onCatalog: (item: CatalogItem) => void
   view: ViewMode
   onViewChange: (view: ViewMode) => void
@@ -152,6 +156,35 @@ export function EditorToolbar({
       </DropdownMenu>
 
       <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+
+      {/* Palette sémantique Vitalya : couleur du texte sélectionné */}
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="ghost" size="icon" className="size-8 text-nuit/80" aria-label="Couleur du texte">
+                <Palette className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Couleur du texte (palette Vitalya)</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="start" className="w-60">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Palette sémantique Vitalya</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {(Object.entries(COLORS) as [ColorKey, (typeof COLORS)[ColorKey]][]).map(([key, color]) => (
+            <DropdownMenuItem key={key} onSelect={() => onColor(key)} className="gap-3" title={`${color.label} ${color.hex}`}>
+              <span className="size-5 shrink-0 rounded-full border border-black/10 shadow-inner" style={{ backgroundColor: color.hex }} aria-hidden />
+              <span className="flex-1">{color.label}</span>
+              <span className="font-mono text-[0.7rem] text-muted-foreground">{color.hex}</span>
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator />
+          <p className="px-2 py-1.5 text-[0.7rem] leading-snug text-muted-foreground">
+            Crème et Blanc sont destinés aux fonds sombres (encadrés vert ou nuit).
+          </p>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {QUICK.map((tool, index) => (
         <span key={tool.action} className="contents">

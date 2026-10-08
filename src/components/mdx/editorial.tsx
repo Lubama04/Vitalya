@@ -16,6 +16,7 @@ import {
   Siren,
   TriangleAlert,
 } from "lucide-react"
+import { typoStyle } from "@/components/mdx/typography"
 import { isAllowedMediaUrl, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
 import { cn } from "@/lib/utils"
 
@@ -27,11 +28,18 @@ type WithChildren = { children?: ReactNode }
 
 // ─── Texte ────────────────────────────────────────────────────
 
-/** Chapeau : résumé introductif de 2 à 4 phrases. */
-export function Chapeau({ children }: WithChildren) {
+/** Chapeau : résumé introductif de 2 à 4 phrases (police et couleur au choix). */
+export function Chapeau({ children, police, couleur }: WithChildren & { police?: string; couleur?: string }) {
   return (
-    <div className="chapeau mb-10 border-l-4 border-vert-emeraude pl-6 font-heading text-[1.35rem] leading-relaxed text-nuit/85 italic [&_p]:m-0">
-      {children}
+    <div className="chapeau relative mb-10 pt-5 pb-6">
+      <span aria-hidden className="absolute top-0 left-0 h-1 w-12 rounded-full bg-orange" />
+      <div
+        className="font-heading text-[1.4rem] leading-relaxed font-medium text-nuit/85 italic sm:text-[1.5rem] [&_p]:m-0 [&_strong]:font-bold [&_strong]:text-vert-fonce"
+        style={typoStyle(police, couleur)}
+      >
+        {children}
+      </div>
+      <span aria-hidden className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-vert-fonce/30 to-transparent" />
     </div>
   )
 }
