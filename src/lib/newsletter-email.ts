@@ -50,7 +50,7 @@ export function newsletterHtml(options: {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF7F2">
     <tr><td align="center" style="padding:24px 12px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#FFFFFF;border-radius:16px;overflow:hidden">
-        <tr><td><a href="${siteUrl}"><img src="${siteUrl}/brand/banniere-email.png" width="600" alt="Vitalya — Santé · Beauté · Bien-être" style="display:block;width:100%;height:auto;border:0"></a></td></tr>
+        <tr><td><a href="${siteUrl}"><img src="${siteUrl}/brand/banniere-email.png" width="600" alt="Vitalya, Santé · Beauté · Bien-être" style="display:block;width:100%;height:auto;border:0"></a></td></tr>
         <tr><td style="height:4px;background:#E8813A"></td></tr>
         <tr><td style="padding:32px 36px 8px">
           <h1 style="font-family:Georgia,serif;color:#0D6B4A;font-size:28px;line-height:1.25;margin:0 0 20px">${escapeHtml(subject)}</h1>

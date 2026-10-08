@@ -26,7 +26,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${SITE.name} — ${SITE.slogan}`,
+    default: `${SITE.name} : ${SITE.slogan}`,
     template: `%s · ${SITE.name}`,
   },
   description: SITE.description,
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: SITE.locale,
     siteName: SITE.name,
-    title: `${SITE.name} — ${SITE.slogan}`,
+    title: `${SITE.name} : ${SITE.slogan}`,
     description: SITE.description,
   },
   twitter: { card: "summary_large_image" },

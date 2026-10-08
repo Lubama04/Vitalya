@@ -148,7 +148,7 @@
   }
 }
 
-/* ═══ Lecteur — mode livre ═══ */
+/* ═══ Lecteur : mode livre ═══ */
 /* Jamais de coupure au milieu d'un paragraphe ou d'un bloc ; un intertitre
    n'est jamais laissé seul en bas de page. */
 .livre-pages p,

@@ -60,7 +60,7 @@ export default async function AdminArticlesPage() {
                   </Link>
                   <span className="text-xs text-muted-foreground">Modifié le {formatDate(article.updated_at)}</span>
                 </TableCell>
-                <TableCell className="hidden md:table-cell">{article.category?.name ?? "—"}</TableCell>
+                <TableCell className="hidden md:table-cell">{article.category?.name ?? "Aucune"}</TableCell>
                 <TableCell>
                   {article.published ? (
                     <span className="rounded-full bg-vert-pale px-2.5 py-1 text-xs font-medium text-vert-fonce">

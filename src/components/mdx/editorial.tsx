@@ -50,7 +50,7 @@ export function Citation({ auteur, fonction, children }: WithChildren & { auteur
       </blockquote>
       {auteur && (
         <figcaption className="mt-5 text-sm">
-          <span className="font-semibold text-nuit">— {auteur}</span>
+          <span className="font-semibold text-nuit">{auteur}</span>
           {fonction && <span className="text-muted-foreground">, {fonction}</span>}
         </figcaption>
       )}

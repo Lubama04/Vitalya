@@ -22,7 +22,7 @@ export async function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6">
         <MobileNav categories={categories} />
 
-        <Link href="/" className="flex shrink-0 items-center" aria-label="Vitalya — accueil">
+        <Link href="/" className="flex shrink-0 items-center" aria-label="Accueil Vitalya">
           <Image
             src="/brand/logo.webp"
             alt="Vitalya"

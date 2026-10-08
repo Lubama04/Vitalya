@@ -77,7 +77,7 @@ export default async function MembersPage({
               return (
                 <TableRow key={member.id}>
                   <TableCell>
-                    <p className="font-medium">{member.full_name || "—"}</p>
+                    <p className="font-medium">{member.full_name || "Sans nom"}</p>
                     <p className="text-xs text-muted-foreground">{member.email}</p>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{formatDate(member.created_at)}</TableCell>

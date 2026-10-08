@@ -158,7 +158,7 @@ export function ArticleEditor({
             <div className="space-y-1.5">
               <Label htmlFor="category">Rubrique</Label>
               <select id="category" name="category" value={category} onChange={(event) => setCategory(event.target.value)} className="h-10 w-full rounded-md border bg-white px-2 text-sm">
-                <option value="">— Aucune —</option>
+                <option value="">Aucune</option>
                 {categories.map((item) => (
                   <option key={item.id} value={item.id}>{item.name}</option>
                 ))}
