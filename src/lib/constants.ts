@@ -51,6 +51,8 @@ export type PricingTier = {
   id: AccessLevel
   name: string
   price: number
+  /** Prix mensuel en francs CFA (doit correspondre à subscription_price en base) */
+  priceFcfa: number
   description: string
   features: string[]
   highlighted?: boolean
@@ -61,6 +63,7 @@ export const PRICING: PricingTier[] = [
     id: "free",
     name: "Gratuit",
     price: 0,
+    priceFcfa: 0,
     description: "Pour découvrir Vitalya et ses conseils essentiels.",
     features: [
       "Articles gratuits en illimité",
@@ -73,6 +76,7 @@ export const PRICING: PricingTier[] = [
     id: "premium",
     name: "Premium",
     price: 5,
+    priceFcfa: 3300,
     description: "Pour aller plus loin dans votre routine santé et beauté.",
     features: [
       "Tout le contenu Gratuit",
@@ -87,6 +91,7 @@ export const PRICING: PricingTier[] = [
     id: "expert",
     name: "Expert",
     price: 10,
+    priceFcfa: 6600,
     description: "L'accès intégral, avec l'éclairage de nos spécialistes.",
     features: [
       "Tout le contenu Premium",
@@ -169,4 +174,9 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
 export function formatDate(iso: string | null): string {
   if (!iso) return ""
   return dateFormatter.format(new Date(iso))
+}
+
+/** Montant en francs CFA, ex. « 3 300 FCFA ». */
+export function formatFcfa(amount: number): string {
+  return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`
 }

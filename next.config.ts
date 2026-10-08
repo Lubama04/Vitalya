@@ -22,7 +22,8 @@ const csp = [
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self' https://checkout.stripe.com",
+  // Redirections de paiement (formulaire envoyé puis redirigé vers la page du prestataire)
+  "form-action 'self' https://checkout.stripe.com https://checkout.pawapay.io https://checkout.sandbox.pawapay.io https://*.moneyfusion.net",
   ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ")
 

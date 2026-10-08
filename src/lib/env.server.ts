@@ -12,6 +12,12 @@ const serverSchema = z.object({
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
   STRIPE_PRICE_PREMIUM: z.string().startsWith("price_").optional(),
   STRIPE_PRICE_EXPERT: z.string().startsWith("price_").optional(),
+  // Paiements mobiles
+  PAYMENT_WEBHOOK_SECRET: z.string().min(32).optional(),
+  PAWAPAY_API_KEY: z.string().min(20).optional(),
+  PAWAPAY_BASE_URL: z.url().default("https://api.sandbox.pawapay.io"),
+  MONEYFUSION_API_URL: z.url().optional(),
+  MONEYFUSION_TOKEN: z.string().min(8).optional(),
 })
 
 // Les chaînes vides sont traitées comme absentes
@@ -30,4 +36,8 @@ export const features = {
       serverEnv.STRIPE_PRICE_EXPERT &&
       serverEnv.SUPABASE_SERVICE_ROLE_KEY,
   ),
+  // Mobile Money (Tchad, Cameroun) via la page de paiement PawaPay
+  pawapay: Boolean(serverEnv.PAWAPAY_API_KEY && serverEnv.PAYMENT_WEBHOOK_SECRET),
+  // Carte bancaire / Wave / Mobile Money UEMOA via MoneyFusion
+  moneyfusion: Boolean(serverEnv.MONEYFUSION_API_URL && serverEnv.PAYMENT_WEBHOOK_SECRET),
 } as const

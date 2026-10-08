@@ -17,8 +17,8 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | UI | Tailwind CSS v4, shadcn/ui (Radix), lucide-react, Playfair Display + Inter (`next/font`) |
 | Données | Supabase : Postgres + RLS, Auth, Storage, Realtime |
 | Contenu | MDX (`next-mdx-remote`, JavaScript bloqué + liste blanche de composants) |
-| Emails | Resend (newsletter) |
-| Paiement | Stripe Checkout + webhook (préparé, inactif tant que non configuré) |
+| Emails | Resend : newsletter ciblée, bienvenue, alertes nouveaux articles, confirmations de paiement |
+| Paiement | **PawaPay** (Mobile Money Tchad / Cameroun, API v2 Checkout) et **MoneyFusion** (carte, Wave, Mobile Money UEMOA) ; Stripe préparé, non activé |
 | PWA | `@ducanh2912/next-pwa` (Workbox) : manifeste, cache hors ligne, push préparé |
 | Hébergement | Vercel |
 
@@ -28,15 +28,19 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | --- | --- |
 | `/` | Accueil : hero, couverture du Volume 01, derniers articles, rubriques, CTA abonnement, newsletter |
 | `/articles` | Tous les articles (pagination) |
-| `/articles/[slug]` | Article : couverture pleine largeur, MDX, **paywall**, j'aime, commentaires en temps réel, articles similaires, JSON-LD |
+| `/articles/[slug]` | Article : couverture pleine largeur, MDX, **paywall**, j'aime, commentaires en temps réel, articles similaires, JSON-LD `Article`, image Open Graph générée (`opengraph-image`) |
 | `/categories/[slug]` | Articles d'une rubrique |
-| `/abonnement` | Offres Gratuit / Premium 5 € / Expert 10 €, FAQ, paiement Stripe |
+| `/abonnement` | Offres Gratuit / Premium 3 300 FCFA / Expert 6 600 FCFA, choix du moyen de paiement (PawaPay ou MoneyFusion), FAQ |
+| `/abonnement/retour` | Retour après paiement : vérification auprès du prestataire, état en direct (confirmé / en attente / échoué) |
 | `/auth` | Connexion, inscription, mot de passe oublié (`/auth/callback` pour les liens email) |
-| `/profil` | Espace abonné : formule, informations, mot de passe, notifications push, articles aimés |
-| `/admin` | Back-office : statistiques, articles (création/édition/publication, import de couverture), abonnés (formule et rôle), newsletter |
+| `/profil` | Espace abonné : formule et moyen de paiement, informations, mot de passe, notifications push, alerte email nouveaux articles, articles aimés |
+| `/admin` | Back-office : statistiques, articles (création/édition/publication, import de couverture), abonnés (formule et rôle), auteurs, newsletter ciblée (tous / gratuits / premium / expert) |
 | `/hors-ligne` | Page de secours du service worker |
 | `/newsletter/desinscription` | Désinscription (confirmation) + `POST /api/newsletter/desinscription` (one-click RFC 8058) |
-| `POST /api/stripe/webhook` | Synchronisation des abonnements Stripe |
+| `POST /api/payments/pawapay/callback` | Callback PawaPay (état relu via l'API avant activation) |
+| `POST /api/payments/moneyfusion/webhook` | Webhook MoneyFusion (état relu via l'API avant activation) |
+| `POST /api/stripe/webhook` | Synchronisation des abonnements Stripe (préparé) |
+| `/sitemap.xml`, `/robots.txt` | Plan du site dynamique (rubriques + articles publiés) et règles d'indexation |
 
 ## Démarrage local
 
@@ -54,10 +58,20 @@ Scripts : `npm run build` (build de production + service worker), `npm run start
 
 Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 
-1. `20261006120000_schema_initial.sql` — tables, contraintes, index, fonctions, RLS, bucket `covers`, Realtime
-2. `20261006120100_contenu_initial.sql` — 5 rubriques + article « Huile de baobab : le secret que l'Afrique gardait »
+| Migration | Contenu |
+| --- | --- |
+| `20261006120000_schema_initial.sql` | tables, contraintes, index, fonctions, RLS, bucket `covers`, Realtime |
+| `20261006120100_contenu_initial.sql` | 5 rubriques + article « Huile de baobab » |
+| `20261006130000_categories_policies.sql` | politiques des rubriques |
+| `20261006150000_article_media.sql` | bucket `article-media` (images, vidéos, audio) |
+| `20261006160000_paywall_fins_de_ligne.sql` | paywall insensible aux fins de ligne Windows |
+| `20261007090000_lecteur.sql` | mode de lecture, positions de lecture |
+| `20261008120000_sondages_auteurs_audio.sql` | votes, auteurs, audio |
+| `20261008130000_vote_accepte.sql` | retour « vote accepté » |
+| `20261009090000_paiements_notifications.sql` | colonnes de paiement mobile, `create_payment`, `confirm_payment`, niveau effectif `current_tier`, préférences d'alerte |
+| `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
 
-Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `push_subscriptions`, `admin_allowlist`.
+Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`.
 
 Types TypeScript : [`src/types/database.ts`](src/types/database.ts) (régénérer avec `npx supabase gen types typescript --project-id cocheygwpsdbtxegdkzf`).
 
@@ -66,10 +80,10 @@ Types TypeScript : [`src/types/database.ts`](src/types/database.ts) (régénére
 | Niveau | Rang | Accès |
 | --- | --- | --- |
 | `free` | 0 | articles gratuits |
-| `premium` | 1 | gratuits + premium (5 €/mois) |
-| `expert` | 2 | tout le magazine (10 €/mois) |
+| `premium` | 1 | gratuits + premium (3 300 FCFA / 30 jours) |
+| `expert` | 2 | tout le magazine (6 600 FCFA / 30 jours) |
 
-Le niveau d'un lecteur est `profiles.subscription_tier`, mis à jour **uniquement** par le webhook Stripe (service role) ou par un administrateur.
+Le **niveau effectif** (`current_tier()`) est le plus élevé entre `profiles.subscription_tier` (attribué par un administrateur ou Stripe) et les abonnements `active` non expirés de la table `subscriptions` (paiements mobiles). Chaque paiement confirmé ouvre 30 jours, ajoutés à la suite d'une période encore en cours. Les montants sont fixés en base (`subscription_price`), jamais par le navigateur.
 
 ### Rôles
 
@@ -89,6 +103,7 @@ update public.profiles set role = 'admin' where email = 'personne@exemple.com';
 - Server Actions : authentification revérifiée (`getUser()`), validation **Zod**, messages d'erreur génériques, protection contre les redirections ouvertes.
 - En-têtes : CSP stricte (sources limitées au site + Supabase), HSTS, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, `poweredByHeader: false`.
 - Service worker : pages privées (`/admin`, `/profil`, `/auth`, `/api`) et API Supabase **jamais mises en cache**.
+- **Paiements mobiles** : le paiement est créé en base par le lecteur connecté (`create_payment` : montant fixé côté serveur, 10 tentatives par heure au maximum). L'activation passe **uniquement** par `confirm_payment`, protégée par un secret partagé (`PAYMENT_WEBHOOK_SECRET`, seule son empreinte SHA-256 est stockée dans `app_secrets`). Webhooks et page de retour ne croient jamais le contenu reçu : l'état et le montant sont **relus auprès de l'API du prestataire** ; montant insuffisant refusé ; confirmation idempotente (un seul email, une seule prolongation).
 - Webhook Stripe : signature vérifiée, upsert idempotent.
 - Newsletter : contenu échappé avant mise en forme, honeypot anti-robots à l'inscription, désinscription par jeton.
 - Aucun secret dans le code : tout passe par `.env.local` / variables Vercel.
@@ -151,7 +166,24 @@ Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne
 2. **Authentication → SMTP** : configurer un SMTP (ex. Resend `smtp.resend.com`). Le SMTP par défaut de Supabase n'envoie qu'aux membres de l'organisation et est très limité.
 
 ### Resend
-Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` et `RESEND_FROM_EMAIL` sur Vercel.
+Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` et `RESEND_FROM_EMAIL` sur Vercel. Tous les emails (newsletter, bienvenue, alerte nouvel article, confirmation de paiement) s'activent avec cette clé ; sans elle, ils sont simplement ignorés.
+
+### PawaPay (Mobile Money Tchad / Cameroun)
+1. Renseigner `PAWAPAY_API_KEY` (jeton du tableau de bord) et, en production, `PAWAPAY_BASE_URL=https://api.pawapay.io` (sandbox par défaut).
+2. Dans le tableau de bord PawaPay, section *Callbacks*, déclarer l'URL de callback des **checkouts** : `https://<domaine>/api/payments/pawapay/callback`.
+3. Les opérateurs proposés sont lus en direct (`/v2/active-conf`) pour `TCD` et `CMR` ; une liste de repli est intégrée si l'API ne répond pas.
+
+### MoneyFusion (carte, Wave, UEMOA)
+Renseigner `MONEYFUSION_API_URL` (URL de création de paiement fournie dans votre tableau de bord MoneyFusion). Le webhook `https://<domaine>/api/payments/moneyfusion/webhook` est transmis à chaque paiement. `MONEYFUSION_TOKEN` est réservé (non requis par l'API publique actuelle).
+
+### Secret de confirmation des paiements
+`PAYMENT_WEBHOOK_SECRET` (au moins 32 caractères aléatoires) doit être identique sur Vercel et dans `app_secrets` (empreinte) :
+
+```sql
+insert into public.app_secrets (name, sha256_hex)
+values ('payment_webhook', encode(extensions.digest('<secret>', 'sha256'), 'hex'))
+on conflict (name) do update set sha256_hex = excluded.sha256_hex;
+```
 
 ### Stripe
 1. Créer deux produits récurrents mensuels (Premium 5 €, Expert 10 €) → `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_EXPERT`.
@@ -161,6 +193,14 @@ Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_K
 ### Notifications push
 Générer des clés VAPID (`npx web-push generate-vapid-keys`) → `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`. L'abonnement des navigateurs et l'affichage des notifications sont en place (`worker/index.ts`, table `push_subscriptions`) ; reste à brancher l'envoi (ex. bibliothèque `web-push` dans une route serveur ou une Edge Function).
 
+## Performance et SEO
+
+- Images : `next/image` partout (AVIF / WebP, tailles adaptées), couverture d'article en `priority`.
+- Polices : `display: swap`, Playfair variable, polices éditoriales sans préchargement.
+- JavaScript : supabase-js et le menu compte chargés à la demande ; lecteur livre, partage de passage et composants MDX interactifs en import dynamique ; `optimizePackageImports` pour `radix-ui` ; aucun `zod` dans le bundle client. First Load JS : accueil 130 kB, article 246 kB.
+- Rendu : accueil en ISR (5 min), en-tête sans lecture de cookies côté serveur, middleware court-circuité pour les visiteurs anonymes.
+- SEO : `sitemap.xml` dynamique, `robots.txt`, métadonnées Open Graph / Twitter par article, image de partage générée (titre, rubrique, couverture), JSON-LD `Article` (auteur, dates, éditeur, logo).
+
 ## Structure
 
 ```
@@ -168,7 +208,7 @@ src/
 ├── actions/          Server Actions (auth, newsletter, engagement, profil, facturation, admin)
 ├── app/              Routes App Router (+ manifest.ts, icônes, image Open Graph)
 ├── components/       UI (shadcn), layout, article, admin, profil
-├── lib/              Supabase (client/serveur/middleware), auth, données, env, Stripe, emails
+├── lib/              Supabase (client/serveur/public/différé), auth, données, env, emails, paiements (PawaPay, MoneyFusion, Stripe)
 ├── middleware.ts     Rafraîchissement de session + protection /profil et /admin
 └── types/            Types de la base
 worker/               Worker personnalisé fusionné au service worker (push)

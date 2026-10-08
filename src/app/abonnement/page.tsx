@@ -1,37 +1,43 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Check, Crown, Gem, Leaf, ShieldCheck } from "lucide-react"
-import { PricingButton } from "@/components/pricing-button"
+import { Check, Crown, Gem, Leaf, ShieldCheck, Smartphone } from "lucide-react"
+import { PaymentDialog } from "@/components/payment-dialog"
 import { Button } from "@/components/ui/button"
 import { getViewer } from "@/lib/auth"
-import { ACCESS_LABELS, PRICING, tierRank } from "@/lib/constants"
+import { ACCESS_LABELS, formatFcfa, PRICING, tierRank } from "@/lib/constants"
 import { features } from "@/lib/env.server"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = {
   title: "Abonnements",
-  description: "Gratuit, Premium à 5 €/mois ou Expert à 10 €/mois : choisissez votre formule Vitalya.",
+  description:
+    "Gratuit, Premium à 3 300 FCFA ou Expert à 6 600 FCFA par mois, payable par Mobile Money, Wave ou carte bancaire : choisissez votre formule Vitalya.",
 }
 
 const ICONS = { free: Leaf, premium: Crown, expert: Gem } as const
 
 const FAQ = [
   {
-    q: "Puis-je résilier à tout moment ?",
-    a: "Oui. L'abonnement est sans engagement : vous le gérez depuis votre espace abonné et gardez l'accès jusqu'à la fin de la période payée.",
+    q: "Quels moyens de paiement sont acceptés ?",
+    a: "Mobile Money via PawaPay au Tchad et au Cameroun (MTN, Orange, Airtel selon les pays), ainsi que la carte bancaire Visa / Mastercard, Wave et le Mobile Money UEMOA (Côte d'Ivoire, Sénégal…) via MoneyFusion.",
   },
   {
-    q: "Quels moyens de paiement sont acceptés ?",
-    a: "Le paiement sécurisé est assuré par Stripe : cartes bancaires Visa, Mastercard et autres moyens selon votre pays.",
+    q: "Mon abonnement se renouvelle-t-il automatiquement ?",
+    a: "Non. Chaque paiement ouvre 30 jours d'accès. Avant l'échéance, il suffit de payer à nouveau depuis cette page : les jours restants sont conservés et la nouvelle période s'ajoute à la suite.",
+  },
+  {
+    q: "Comment se déroule un paiement Mobile Money ?",
+    a: "Vous choisissez votre opérateur et saisissez votre numéro, puis vous validez la demande sur votre téléphone avec votre code secret. L'accès est activé automatiquement dès la confirmation de l'opérateur, et un email récapitulatif vous est envoyé.",
   },
   {
     q: "Puis-je passer de Premium à Expert ?",
-    a: "Bien sûr. Le changement d'offre est immédiat et calculé au prorata.",
+    a: "Bien sûr : choisissez Expert, l'accès Expert est activé dès le paiement confirmé.",
   },
 ]
 
 export default async function PricingPage() {
   const viewer = await getViewer()
+  const available = { pawapay: features.pawapay, moneyfusion: features.moneyfusion }
   const currentRank = viewer ? tierRank(viewer.tier) : -1
 
   return (
@@ -45,11 +51,10 @@ export default async function PricingPage() {
           Choisissez la formule qui vous ressemble et soutenez un média indépendant dédié à la santé
           et à la beauté africaines.
         </p>
-        {!features.stripe && (
-          <p className="mx-auto mt-6 inline-flex items-center gap-2 rounded-full bg-or/20 px-4 py-2 text-sm font-medium text-nuit">
-            Paiement en ligne bientôt disponible : les offres sont présentées à titre indicatif.
-          </p>
-        )}
+        <p className="mx-auto mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-vert-pale px-4 py-2 text-sm font-medium text-vert-fonce">
+          <ShieldCheck className="size-4" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion
+          <span className="text-vert-fonce/80">· Mobile Money, Wave, carte bancaire</span>
+        </p>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 sm:px-6 lg:grid-cols-3" aria-label="Formules">
@@ -82,9 +87,11 @@ export default async function PricingPage() {
                 <h2 className="text-2xl font-bold">{tier.name}</h2>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
-              <p className="mt-6 font-heading text-5xl font-bold text-nuit">
-                {tier.price} €<span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
+              <p className="mt-6 font-heading text-4xl font-bold text-nuit sm:text-5xl">
+                {tier.priceFcfa === 0 ? "0 FCFA" : formatFcfa(tier.priceFcfa)}
+                <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
               </p>
+              {tier.price > 0 && <p className="mt-1 text-sm text-muted-foreground">soit environ {tier.price} €</p>}
               <ul className="mt-8 flex-1 space-y-3">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex gap-3 text-sm">
@@ -95,9 +102,32 @@ export default async function PricingPage() {
               </ul>
               <div className="mt-8">
                 {isCurrent ? (
-                  <p className="rounded-xl bg-vert-pale py-3 text-center text-sm font-semibold text-vert-fonce">
-                    Votre formule actuelle
-                  </p>
+                  <div className="space-y-3">
+                    <p className="rounded-xl bg-vert-pale py-3 text-center text-sm font-semibold text-vert-fonce">
+                      Votre formule actuelle
+                    </p>
+                    {tier.id !== "free" && (
+                      <PaymentDialog
+                        tier={tier.id === "expert" ? "expert" : "premium"}
+                        tierName={tier.name}
+                        priceFcfa={tier.priceFcfa}
+                        label="Prolonger de 30 jours"
+                        isAuthenticated
+                        defaultName={viewer?.fullName ?? ""}
+                        available={available}
+                      />
+                    )}
+                  </div>
+                ) : isIncluded && tier.id !== "free" ? (
+                  <PaymentDialog
+                    tier={tier.id === "expert" ? "expert" : "premium"}
+                    tierName={tier.name}
+                    priceFcfa={tier.priceFcfa}
+                    label="Prolonger ou reprendre"
+                    isAuthenticated
+                    defaultName={viewer?.fullName ?? ""}
+                    available={available}
+                  />
                 ) : isIncluded ? (
                   <p className="rounded-xl bg-muted py-3 text-center text-sm text-muted-foreground">
                     Inclus dans votre formule {viewer ? ACCESS_LABELS[viewer.tier] : ""}
@@ -107,7 +137,16 @@ export default async function PricingPage() {
                     <Link href="/auth?mode=inscription">Créer un compte gratuit</Link>
                   </Button>
                 ) : (
-                  <PricingButton tier={tier.id} label={`Choisir ${tier.name}`} highlighted={tier.highlighted} />
+                  <PaymentDialog
+                    tier={tier.id === "expert" ? "expert" : "premium"}
+                    tierName={tier.name}
+                    priceFcfa={tier.priceFcfa}
+                    label={`Choisir ${tier.name}`}
+                    highlighted={tier.highlighted}
+                    isAuthenticated={Boolean(viewer)}
+                    defaultName={viewer?.fullName ?? ""}
+                    available={available}
+                  />
                 )}
               </div>
             </article>
@@ -131,7 +170,7 @@ export default async function PricingPage() {
           ))}
         </div>
         <p className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <ShieldCheck className="size-4 text-vert-emeraude" aria-hidden /> Paiement sécurisé par Stripe · Sans engagement
+          <Smartphone className="size-4 text-vert-emeraude" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion · Sans engagement
         </p>
       </section>
     </div>
