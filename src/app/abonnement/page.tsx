@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 import Link from "next/link"
 import { Check, Crown, Gem, Leaf, ShieldCheck, Smartphone } from "lucide-react"
 import { PaymentBadges } from "@/components/payment-badges"
@@ -19,7 +20,7 @@ const ICONS = { free: Leaf, premium: Crown, expert: Gem } as const
 const FAQ = [
   {
     q: "Quels moyens de paiement sont acceptés ?",
-    a: "Mobile Money via PawaPay au Tchad et au Cameroun (MTN, Orange, Airtel selon les pays), ainsi que la carte bancaire Visa / Mastercard, Wave et le Mobile Money UEMOA (Côte d'Ivoire, Sénégal…) via MoneyFusion.",
+    a: "La carte Visa / Mastercard est acceptée dans tous les pays. Le Mobile Money (Orange Money, Airtel Money, MTN MoMo, Wave… selon les pays) est disponible dans 24 pays d'Afrique, dont le Cameroun, le Tchad, la Côte d'Ivoire, le Sénégal, le Gabon, les deux Congo, le Bénin, le Togo, le Burkina Faso, le Niger, le Ghana, le Nigeria et le Kenya.",
   },
   {
     q: "Mon abonnement se renouvelle-t-il automatiquement ?",
@@ -36,6 +37,8 @@ const FAQ = [
 ]
 
 export default async function PricingPage() {
+  // Pays du visiteur détecté par l'hébergeur (adresse IP) : simple suggestion modifiable
+  const detected = (await headers()).get("x-vercel-ip-country")?.toUpperCase() ?? null
   const viewer = await getViewer()
   const currentRank = viewer ? tierRank(viewer.tier) : -1
 
@@ -51,7 +54,7 @@ export default async function PricingPage() {
           et à la beauté africaines.
         </p>
         <p className="mx-auto mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-full bg-vert-pale px-4 py-2 text-sm font-medium text-vert-fonce">
-          <ShieldCheck className="size-4" aria-hidden /> Paiement sécurisé : Orange Money, Airtel, MTN, Wave, Visa, Mastercard
+          <ShieldCheck className="size-4" aria-hidden /> Paiement 100% sécurisé et crypté
         </p>
       </section>
 
@@ -112,6 +115,7 @@ export default async function PricingPage() {
                     priceFcfa={tier.priceFcfa}
                         label="Prolonger d'un mois"
                         isAuthenticated
+                        defaultCountry={detected}
                       />
                     )}
                   </div>
@@ -123,6 +127,7 @@ export default async function PricingPage() {
                     priceFcfa={tier.priceFcfa}
                     label="Prolonger ou reprendre"
                     isAuthenticated
+                    defaultCountry={detected}
                   />
                 ) : isIncluded ? (
                   <p className="rounded-xl bg-muted py-3 text-center text-sm text-muted-foreground">
@@ -141,6 +146,7 @@ export default async function PricingPage() {
                     label={`Choisir ${tier.name}`}
                     highlighted={tier.highlighted}
                     isAuthenticated={Boolean(viewer)}
+                    defaultCountry={detected}
                   />
                 )}
                 {tier.id !== "free" && <PaymentBadges className="mt-4 justify-center" />}
@@ -166,7 +172,7 @@ export default async function PricingPage() {
           ))}
         </div>
         <p className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Smartphone className="size-4 text-vert-emeraude" aria-hidden /> Paiement sécurisé par PawaPay et MoneyFusion · Sans engagement · Sans renouvellement automatique
+          <Smartphone className="size-4 text-vert-emeraude" aria-hidden /> Paiement 100% sécurisé et crypté · Sans engagement · Sans renouvellement automatique
         </p>
       </section>
     </div>

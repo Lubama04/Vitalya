@@ -4,47 +4,37 @@ import { redirect } from "next/navigation"
 import { z } from "zod"
 import { fail, type ActionState } from "@/actions/types"
 import { siteUrl } from "@/lib/env"
-import { serverEnv } from "@/lib/env.server"
+import { isCountryCode, mobileMoneyCountry } from "@/lib/payments/countries"
 import { createPaymentViaEdge } from "@/lib/payments/edge"
-import { getPawapayProviders, isPawapayCountry, type PawapayProvider } from "@/lib/payments/pawapay"
+import { getPawapayProviders, type PawapayProvider } from "@/lib/payments/pawapay"
 import { createClient } from "@/lib/supabase/server"
 
-// Repli si la configuration PawaPay est momentanément injoignable
-const FALLBACK_OPERATORS: Record<"TCD" | "CMR", { code: string; name: string }[]> = {
-  TCD: [
-    { code: "AIRTEL_TCD", name: "Airtel Money" },
-    { code: "MOOV_TCD", name: "Moov Money" },
-  ],
-  CMR: [
-    { code: "MTN_MOMO_CMR", name: "MTN MoMo" },
-    { code: "ORANGE_CMR", name: "Orange Money" },
-  ],
-}
-
-/** Opérateurs Mobile Money ouverts pour un pays (lus en direct via /v2/active-conf, jamais figés). */
-export async function listPawapayOperators(country: unknown): Promise<PawapayProvider[]> {
-  if (!isPawapayCountry(country)) return []
-  const providers = serverEnv.PAWAPAY_API_KEY ? await getPawapayProviders(country) : []
-  return providers.length > 0 ? providers : FALLBACK_OPERATORS[country].map((operator) => ({ ...operator, country }))
+/**
+ * Opérateurs Mobile Money proposés pour un pays (configuration du prestataire principal, en direct).
+ * Liste vide : le lecteur choisira son opérateur sur la page de paiement.
+ */
+export async function listMobileOperators(country: unknown): Promise<PawapayProvider[]> {
+  const info = typeof country === "string" ? mobileMoneyCountry(country) : null
+  if (!info || info.route === "moneyfusion") return []
+  return getPawapayProviders(info)
 }
 
 const paymentSchema = z.object({
   tier: z.enum(["premium", "expert"], { error: "Formule invalide" }),
   method: z.enum(["mobile", "card"]),
-  country: z.enum(["TCD", "CMR"]).optional(),
+  country: z.string().refine(isCountryCode, "Choisissez votre pays."),
   operator: z
     .string()
     .regex(/^[A-Z0-9_]{3,40}$/)
     .optional()
     .or(z.literal("").transform(() => undefined)),
   phone: z.string().trim().max(30).optional().default(""),
-  name: z.string().trim().max(80).optional().default(""),
 })
 
 /**
- * « Payer par Mobile Money » / « Payer par carte bancaire ».
- * L'Edge Function create-payment tente PawaPay puis bascule silencieusement sur MoneyFusion ;
- * le lecteur est redirigé vers la page de paiement retenue.
+ * « Payer par Mobile Money » / « Payer par Visa / Mastercard ».
+ * Le routage entre prestataires (et la bascule automatique) est fait par l'Edge Function
+ * create-payment ; le lecteur est redirigé vers la page de paiement retenue.
  */
 export async function startPayment(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
@@ -62,9 +52,8 @@ export async function startPayment(_prev: ActionState, formData: FormData): Prom
   const data = parsed.data
 
   if (data.method === "mobile") {
-    if (!data.country) return fail("Choisissez votre pays.")
-    if (!data.operator) return fail("Choisissez votre opérateur.")
-    if (data.phone.replace(/\D/g, "").length < 8) return fail("Indiquez votre numéro Mobile Money.")
+    if (!mobileMoneyCountry(data.country)) return fail("Le Mobile Money n'est pas disponible dans ce pays : utilisez Visa / Mastercard.")
+    if (data.phone.replace(/\D/g, "").length < 7) return fail("Indiquez votre numéro Mobile Money.")
   }
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle()
@@ -72,17 +61,21 @@ export async function startPayment(_prev: ActionState, formData: FormData): Prom
   const result = await createPaymentViaEdge(session.access_token, {
     tier: data.tier,
     method: data.method,
-    country: data.country ?? null,
+    country: data.country,
     operator: data.operator ?? null,
     phone: data.phone,
-    name: data.name || profile?.full_name || "",
+    name: profile?.full_name || "",
     origin: siteUrl,
   })
 
   if (!result.ok) {
     if (result.error === "not_authenticated") redirect("/auth?next=/abonnement")
     if (result.error === "too_many_payments") return fail("Trop de tentatives de paiement. Réessayez dans une heure.")
-    return fail("Le paiement est momentanément indisponible. Réessayez dans quelques minutes.")
+    return fail(
+      data.method === "mobile"
+        ? "Le paiement Mobile Money est momentanément indisponible. Réessayez dans quelques minutes ou payez par Visa / Mastercard."
+        : "Le paiement par carte est momentanément indisponible. Réessayez dans quelques minutes.",
+    )
   }
 
   redirect(result.redirectUrl)

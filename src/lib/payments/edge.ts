@@ -13,7 +13,8 @@ export type PaymentProvider = "pawapay" | "moneyfusion"
 export type CreatePaymentInput = {
   tier: "premium" | "expert"
   method: "mobile" | "card"
-  country: "TCD" | "CMR" | null
+  // Code ISO 3166-1 alpha-2 (tous pays)
+  country: string
   operator: string | null
   phone: string
   name: string
@@ -65,6 +66,9 @@ export type ConfirmedPayment = {
   period_end: string | null
   newly_activated: boolean
   first_subscription: boolean
+  /** Montant et devise réellement facturés (devise locale pour le Mobile Money) */
+  amount: number | null
+  currency: string | null
 }
 
 /** unknown : référence inconnue ; rejected : montant insuffisant ; error : à réessayer */

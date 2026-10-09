@@ -61,8 +61,8 @@ export default async function ProfilePage({
     supabase.from("profiles").select("notify_new_articles").eq("id", viewer.id).maybeSingle(),
   ])
   const providerLabel: Record<string, string> = {
-    pawapay: "Mobile Money (PawaPay)",
-    moneyfusion: "MoneyFusion",
+    pawapay: "Mobile Money",
+    moneyfusion: "Paiement en ligne (carte ou Mobile Money)",
     stripe: "Carte bancaire (Stripe)",
     manual: "Attribué par l'équipe",
   }

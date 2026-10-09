@@ -73,6 +73,7 @@ Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 | `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
 | `20261009150000_paiements_fallback.sql` | table `payment_logs`, période d'un mois, détection du premier abonnement |
 | `20261009170000_tarifs.sql` | tarifs : Premium 6 000 FCFA, Expert 11 000 FCFA |
+| `20261009190000_prix_par_devise.sql` | table `subscription_prices` (prix par devise, modifiables par UPDATE), `price_for`, `create_payment` lit le montant en base |
 
 Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`, `payment_logs`.
 
@@ -175,6 +176,15 @@ Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_K
 
 ### Edge Functions de paiement
 Secrets Supabase (*Edge Functions → Secrets*) : `PAWAPAY_API_KEY`, `PAWAPAY_BASE_URL`, `MONEYFUSION_API_URL`. Diagnostic sans secret : `GET https://<projet>.supabase.co/functions/v1/create-payment` renvoie les prestataires configurés.
+
+### Routage des paiements
+- **Visa / Mastercard** : MoneyFusion, dans tous les pays.
+- **Mobile Money** (24 pays, voir `src/lib/payments/countries.ts`, à garder aligné avec `supabase/functions/create-payment`) :
+  PawaPay seul (RD Congo, Ghana, Kenya, Malawi, Mozambique, Nigeria, Rwanda, Sierra Leone, Tanzanie, Ouganda, Zambie, en devise locale) ;
+  MoneyFusion seul (Tchad, Centrafrique, Guinée-Bissau, Guinée, Niger, Togo, Congo-Brazzaville) ;
+  les deux (Bénin, Burkina Faso, Cameroun, Côte d'Ivoire, Gabon, Sénégal : PawaPay puis MoneyFusion en secours).
+- Prix : table `subscription_prices` (FCFA de référence 6 000 / 11 000 ; autres devises = équivalents à valider).
+- Diagnostic MoneyFusion (adresse IP de sortie, « IP non autorisée … » dans les journaux) : `POST /functions/v1/confirm-payment` avec l'en-tête `x-payment-secret` et le corps `{"diagnostic":"moneyfusion"}`.
 
 ### PawaPay (Mobile Money Tchad / Cameroun)
 1. `PAWAPAY_API_KEY` et `PAWAPAY_BASE_URL` (`https://api.pawapay.io` en production, sandbox par défaut) : secrets Edge Functions **et** variables Vercel (la liste des opérateurs est lue côté Next.js).

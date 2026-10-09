@@ -3,14 +3,14 @@ import { sendEmails } from "@/lib/email"
 import { siteUrl } from "@/lib/env"
 import { paidWelcomeEmailHtml, paymentConfirmationHtml } from "@/lib/newsletter-email"
 import { confirmPaymentViaEdge, type ConfirmOutcome, type PaymentProvider } from "@/lib/payments/edge"
-import { createPublicClient } from "@/lib/supabase/public"
 
 export type { PaymentProvider }
 export type PaymentOutcome = ConfirmOutcome
 
+// Libellés affichés au lecteur : jamais le nom des prestataires
 const PROVIDER_LABELS: Record<PaymentProvider, string> = {
-  pawapay: "Mobile Money (PawaPay)",
-  moneyfusion: "MoneyFusion",
+  pawapay: "Mobile Money",
+  moneyfusion: "Paiement en ligne (carte bancaire ou Mobile Money)",
 }
 
 const TIER_LABELS: Record<string, string> = { premium: "Premium", expert: "Expert" }
@@ -26,7 +26,6 @@ export async function verifyAndConfirmPayment(provider: PaymentProvider, referen
 
   if (outcome === "paid" && payment?.newly_activated && payment.user_email && payment.period_end) {
     const tier = TIER_LABELS[payment.tier] ?? payment.tier
-    const { data: price } = await createPublicClient().rpc("subscription_price", { p_tier: payment.tier })
     const emails = [
       {
         to: payment.user_email,
@@ -35,8 +34,8 @@ export async function verifyAndConfirmPayment(provider: PaymentProvider, referen
           siteUrl,
           name: payment.user_name,
           tier,
-          amount: typeof price === "number" ? price : 0,
-          currency: provider === "pawapay" ? "XAF" : "XOF",
+          amount: payment.amount ?? 0,
+          currency: payment.currency ?? "XAF",
           provider: PROVIDER_LABELS[provider],
           periodEnd: payment.period_end,
         }),
