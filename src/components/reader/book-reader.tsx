@@ -77,7 +77,8 @@ export function BookReader({
     const measure = () => {
       const width = viewport.clientWidth
       const height = viewport.clientHeight
-      const padX = width < 480 ? 20 : 44
+      // Marges de page : plus généreuses sur les grands formats (lignes de longueur confortable)
+      const padX = width < 480 ? 20 : width >= 800 ? 64 : 44
       const padY = width < 480 ? 24 : 40
       setBox((current) =>
         current.width === width && current.height === height ? current : { width, height, padX, padY },
@@ -298,7 +299,7 @@ export function BookReader({
           <ChevronLeft className="size-6" />
         </button>
 
-        <div className="relative w-full max-w-[720px] [perspective:1200px]">
+        <div className="relative w-full max-w-[900px] [perspective:1200px] lg:min-h-[70vh]">
           {/* Page affichée */}
           <div
             ref={viewportRef}
@@ -326,7 +327,7 @@ export function BookReader({
               <section className="livre-titre flex h-full flex-col justify-end">
                 {meta.coverImage && (
                   <div className="relative mb-6 min-h-0 flex-1 overflow-hidden rounded-xl bg-vert-pale">
-                    <ContentImage src={meta.coverImage} alt="" fill sizes="720px" className="max-h-none! object-cover" />
+                    <ContentImage src={meta.coverImage} alt="" fill sizes="900px" className="max-h-none! object-cover" />
                   </div>
                 )}
                 {meta.category && (
@@ -389,7 +390,7 @@ export function BookReader({
 
       {/* ─── Pied : numéro de page + progression ─── */}
       <footer className="px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
-        <div className="mx-auto flex max-w-[720px] items-center gap-4">
+        <div className="mx-auto flex max-w-[900px] items-center gap-4">
           <p className="shrink-0 text-sm font-semibold text-vert-fonce tabular-nums" aria-live="polite">
             Page {page + 1} / {pageCount}
           </p>

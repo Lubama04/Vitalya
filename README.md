@@ -32,6 +32,7 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | `/categories/[slug]` | Articles d'une rubrique |
 | `/abonnement` | Offres Gratuit / Premium 6 000 FCFA / Expert 11 000 FCFA, modale de paiement (Mobile Money ou carte bancaire), FAQ |
 | `/abonnement/confirmation` | Retour après paiement : vérification auprès du prestataire, succès (redirection vers `/profil`), échec (réessayer) ou attente (relecture toutes les 5 s). `/abonnement/retour` y redirige |
+| `/magazine` | Numéros du magazine ; `GET /magazine/[numero]/pdf` génère le PDF selon la formule (Premium : articles Expert en résumé ; Expert et équipe : intégral) |
 | `/abonnement/erreur` | Paiement non abouti, bouton Réessayer |
 | `/auth` | Connexion, inscription, mot de passe oublié (`/auth/callback` pour les liens email) |
 | `/profil` | Espace abonné : formule et moyen de paiement, informations, mot de passe, notifications push, alerte email nouveaux articles, articles aimés |
@@ -73,6 +74,7 @@ Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 | `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
 | `20261009150000_paiements_fallback.sql` | table `payment_logs`, période d'un mois, détection du premier abonnement |
 | `20261009170000_tarifs.sql` | tarifs : Premium 6 000 FCFA, Expert 11 000 FCFA |
+| `20261013120000_magazine_editions.sql` | numéros du magazine (`magazine_editions`), N°01 avec les 8 articles |
 | `20261009190000_prix_par_devise.sql` | table `subscription_prices` (prix par devise, modifiables par UPDATE), `price_for`, `create_payment` lit le montant en base |
 
 Tables : `profiles`, `categories`, `articles`, `subscriptions`, `newsletters`, `newsletter_subscribers`, `comments`, `likes`, `votes`, `authors`, `reading_positions`, `push_subscriptions`, `admin_allowlist`, `app_secrets`, `payment_logs`.

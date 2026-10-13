@@ -165,29 +165,34 @@ export default async function HomePage() {
                 Dossiers complets, analyses d&apos;experts et rituels détaillés : soutenez une rédaction
                 indépendante dédiée à votre bien-être.
               </p>
-              <Button asChild size="lg" className="mt-8 h-12 bg-orange px-6 text-base text-nuit hover:bg-orange/90">
+              <Button asChild size="lg" className="cta-pulse mt-8 h-12 bg-orange px-6 text-base font-semibold text-nuit hover:bg-orange/90">
                 <Link href="/abonnement">
                   <Sparkles className="size-5" /> Voir les offres
                 </Link>
               </Button>
             </div>
-            <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <ul className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {PRICING.map((tier) => (
-                <li
-                  key={tier.id}
-                  className={`rounded-2xl border p-5 ${tier.highlighted ? "border-or bg-white/10" : "border-white/15 bg-white/5"}`}
-                >
-                  <p className="text-sm font-semibold text-white/70">{tier.name}</p>
-                  <p className="mt-1 font-heading text-3xl font-bold">
-                    {tier.priceFcfa === 0 ? (
-                      "Gratuit"
-                    ) : (
-                      <>
-                        {formatFcfa(tier.priceFcfa)}
-                        <span className="text-sm font-normal text-white/80"> /mois</span>
-                      </>
+                <li key={tier.id} className="min-w-0">
+                  {/* Toute la carte mène au paiement de la formule (ouverture directe) */}
+                  <Link
+                    href={tier.id === "free" ? "/auth?mode=inscription" : `/abonnement?formule=${tier.id}`}
+                    className={`group relative flex h-full min-w-0 flex-col rounded-2xl border-2 p-5 transition-[scale,box-shadow,border-color,background-color] duration-300 hover:border-vert-emeraude hover:bg-white/15 hover:shadow-2xl hover:shadow-black/30 focus-visible:border-vert-emeraude focus-visible:outline-none motion-safe:hover:scale-[1.03] ${tier.highlighted ? "border-or bg-white/10" : "border-white/15 bg-white/5"}`}
+                  >
+                    {tier.id === "premium" && (
+                      <span className="mb-2 w-fit rounded-full bg-orange px-2.5 py-0.5 text-[0.62rem] font-bold tracking-wider whitespace-nowrap text-nuit uppercase">
+                        Le plus populaire
+                      </span>
                     )}
-                  </p>
+                    <span className="truncate text-sm font-semibold text-white/75">{tier.name}</span>
+                    <span className="mt-1 font-heading text-2xl leading-tight font-bold whitespace-nowrap sm:text-[clamp(1.1rem,2.6vw,1.5rem)] lg:text-2xl xl:text-[clamp(1.15rem,1.55vw,1.5rem)]">
+                      {tier.priceFcfa === 0 ? "Gratuit" : formatFcfa(tier.priceFcfa)}
+                    </span>
+                    {tier.priceFcfa > 0 && <span className="text-xs text-white/75">par mois</span>}
+                    <span className="mt-auto inline-flex items-center gap-1 pt-3 text-xs font-semibold text-or transition-transform group-hover:translate-x-0.5">
+                      {tier.id === "free" ? "Créer un compte" : "Choisir"} <ArrowRight className="size-3.5" aria-hidden />
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ul>

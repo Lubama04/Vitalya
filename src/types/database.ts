@@ -190,6 +190,36 @@ export type Database = {
           },
         ]
       }
+      magazine_editions: {
+        Row: {
+          id: string
+          numero: number
+          titre: string
+          date_publication: string
+          article_ids: string[]
+          couverture_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          numero: number
+          titre: string
+          date_publication: string
+          article_ids?: string[]
+          couverture_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          numero?: number
+          titre?: string
+          date_publication?: string
+          article_ids?: string[]
+          couverture_url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string

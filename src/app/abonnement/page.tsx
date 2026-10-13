@@ -36,7 +36,9 @@ const FAQ = [
   },
 ]
 
-export default async function PricingPage() {
+export default async function PricingPage({ searchParams }: { searchParams: Promise<{ formule?: string }> }) {
+  // « ?formule=premium » (cartes de l'accueil) : ouvre directement le paiement de cette formule
+  const { formule } = await searchParams
   // Pays du visiteur détecté par l'hébergeur (adresse IP) : simple suggestion modifiable
   const detected = (await headers()).get("x-vercel-ip-country")?.toUpperCase() ?? null
   const viewer = await getViewer()
@@ -67,13 +69,15 @@ export default async function PricingPage() {
             <article
               key={tier.id}
               className={cn(
-                "relative flex flex-col rounded-3xl border bg-white p-8 shadow-sm",
-                tier.highlighted && "border-2 border-orange shadow-xl lg:-translate-y-3",
+                "group relative flex min-w-0 flex-col rounded-3xl border-2 border-border bg-white p-6 shadow-sm transition-[scale,box-shadow,border-color] duration-300 sm:p-8",
+                "hover:border-vert-fonce hover:shadow-2xl motion-safe:hover:scale-[1.03] has-[:focus-visible]:border-vert-fonce",
+                tier.id !== "free" && "cursor-pointer",
+                tier.highlighted && "border-orange shadow-xl lg:-translate-y-3",
               )}
             >
-              {tier.highlighted && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-orange px-4 py-1 text-xs font-bold tracking-wider text-nuit uppercase">
-                  Le plus choisi
+              {tier.id === "premium" && (
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-orange px-4 py-1 text-xs font-bold tracking-wider whitespace-nowrap text-nuit uppercase shadow-md">
+                  Le plus populaire
                 </span>
               )}
               <div className="flex items-center gap-3">
@@ -85,18 +89,15 @@ export default async function PricingPage() {
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <h2 className="text-2xl font-bold">{tier.name}</h2>
+                <h2 className="min-w-0 truncate text-2xl font-bold">{tier.name}</h2>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
-              <p className="mt-6 font-heading text-4xl font-bold whitespace-nowrap text-nuit">
-                {tier.priceFcfa === 0 ? (
-                  "Gratuit"
-                ) : (
-                  <>
-                    {formatFcfa(tier.priceFcfa)}
-                    <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
-                  </>
-                )}
+              {/* Prix : taille adaptée à la largeur de la carte, jamais coupé ni débordant */}
+              <p className="mt-6 flex flex-wrap items-baseline gap-x-1.5 text-nuit">
+                <span className="font-heading text-[clamp(1.75rem,7vw,2.25rem)] leading-tight font-bold whitespace-nowrap lg:text-[clamp(1.6rem,2.4vw,2.25rem)]">
+                  {tier.priceFcfa === 0 ? "Gratuit" : formatFcfa(tier.priceFcfa)}
+                </span>
+                {tier.priceFcfa > 0 && <span className="text-base text-muted-foreground">/mois</span>}
               </p>
               <ul className="mt-8 flex-1 space-y-3">
                 {tier.features.map((feature) => (
@@ -120,6 +121,7 @@ export default async function PricingPage() {
                         label="Prolonger d'un mois"
                         isAuthenticated
                         defaultCountry={detected}
+                        defaultOpen={formule === tier.id}
                       />
                     )}
                   </div>
@@ -131,13 +133,21 @@ export default async function PricingPage() {
                     label="Prolonger ou reprendre"
                     isAuthenticated
                     defaultCountry={detected}
+                    stretched
+                    defaultOpen={formule === tier.id}
+                    pulse={false}
                   />
                 ) : isIncluded ? (
                   <p className="rounded-xl bg-muted py-3 text-center text-sm text-muted-foreground">
                     Inclus dans votre formule {viewer ? ACCESS_LABELS[viewer.tier] : ""}
                   </p>
                 ) : tier.id === "free" ? (
-                  <Button asChild size="lg" variant="outline" className="h-12 w-full text-base">
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className="h-12 w-full text-base after:absolute after:inset-0 after:rounded-3xl after:content-[''] active:translate-none!"
+                  >
                     <Link href="/auth?mode=inscription">Créer un compte gratuit</Link>
                   </Button>
                 ) : (
@@ -149,6 +159,9 @@ export default async function PricingPage() {
                     highlighted={tier.highlighted}
                     isAuthenticated={Boolean(viewer)}
                     defaultCountry={detected}
+                    stretched
+                    defaultOpen={formule === tier.id}
+                    pulse
                   />
                 )}
                 {tier.id !== "free" && <PaymentBadges className="mt-4 justify-center" />}

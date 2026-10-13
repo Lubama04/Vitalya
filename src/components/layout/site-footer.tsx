@@ -41,6 +41,7 @@ export async function SiteFooter() {
           <h2 className="mb-4 font-sans text-sm font-semibold tracking-wider text-white uppercase">Le magazine</h2>
           <ul className="space-y-2.5 text-sm">
             <li><Link href="/articles" className="transition-colors hover:text-or">Tous les articles</Link></li>
+            <li><Link href="/magazine" className="transition-colors hover:text-or">Magazine PDF</Link></li>
             <li><Link href="/abonnement" className="transition-colors hover:text-or">Abonnements</Link></li>
             <li><Link href="/profil" className="transition-colors hover:text-or">Mon espace</Link></li>
             <li><Link href="/auth" className="transition-colors hover:text-or">Connexion</Link></li>

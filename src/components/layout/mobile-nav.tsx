@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu } from "lucide-react"
+import { LayoutDashboard, Menu } from "lucide-react"
+import { useAccount } from "@/components/layout/account-store"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
@@ -11,6 +12,7 @@ type NavCategory = { id: string; name: string; slug: string; color: string }
 export function MobileNav({ categories }: { categories: NavCategory[] }) {
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
+  const account = useAccount()
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -31,6 +33,9 @@ export function MobileNav({ categories }: { categories: NavCategory[] }) {
           <Link href="/articles" onClick={close} className="rounded-lg px-3 py-2.5 font-medium hover:bg-vert-pale">
             Tous les articles
           </Link>
+          <Link href="/magazine" onClick={close} className="rounded-lg px-3 py-2.5 font-medium hover:bg-vert-pale">
+            Magazine PDF
+          </Link>
           <p className="mt-4 mb-1 px-3 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             Rubriques
           </p>
@@ -46,6 +51,13 @@ export function MobileNav({ categories }: { categories: NavCategory[] }) {
             </Link>
           ))}
           <div className="mt-6 flex flex-col gap-2 border-t pt-6">
+            {account?.isAdmin && (
+              <Button asChild className="bg-vert-fonce text-white hover:bg-vert-fonce/90">
+                <Link href="/admin" onClick={close}>
+                  <LayoutDashboard className="size-4" aria-hidden /> Dashboard
+                </Link>
+              </Button>
+            )}
             <Button asChild className="bg-orange text-nuit hover:bg-orange/90">
               <Link href="/abonnement" onClick={close}>Découvrir les abonnements</Link>
             </Button>

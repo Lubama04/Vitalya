@@ -48,20 +48,26 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
         )}
       </div>
 
-      <div className={cn("flex flex-1 flex-col", featured ? "justify-center p-6 lg:p-10" : compact ? "py-1" : "pt-4")}>
-        {article.category && (
-          <Link
-            href={`/categories/${article.category.slug}`}
-            className="relative z-10 mb-2 w-fit text-xs font-semibold tracking-wider uppercase hover:underline"
-            style={{ color: accentOnWhite(article.category.color) }}
-          >
-            {article.category.name}
-          </Link>
+      <div className={cn("flex min-w-0 flex-1 flex-col", featured ? "justify-center p-6 lg:p-10" : compact ? "py-1" : "pt-4")}>
+        {(article.category || compact) && (
+          <div className="mb-2 flex min-w-0 items-center gap-2">
+            {compact && <AccessBadge level={article.accessLevel} size="sm" />}
+            {article.category && (
+              <Link
+                href={`/categories/${article.category.slug}`}
+                className="relative z-10 min-w-0 truncate text-xs font-semibold tracking-wider uppercase hover:underline"
+                style={{ color: accentOnWhite(article.category.color) }}
+              >
+                {article.category.name}
+              </Link>
+            )}
+          </div>
         )}
         <h3
           className={cn(
-            "font-heading leading-tight font-bold text-nuit transition-colors group-hover:text-vert-fonce",
-            featured ? "text-3xl lg:text-4xl" : compact ? "text-base" : "text-xl",
+            "font-heading leading-tight font-bold break-words text-nuit transition-colors group-hover:text-vert-fonce",
+            // Titres limités en lignes (points de suspension), jamais hors de la carte
+            featured ? "line-clamp-4 text-2xl sm:text-3xl lg:text-4xl" : compact ? "line-clamp-2 text-base" : "line-clamp-3 text-xl",
           )}
         >
           <Link href={`/articles/${article.slug}`} className="after:absolute after:inset-0">

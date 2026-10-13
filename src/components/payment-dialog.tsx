@@ -30,6 +30,9 @@ export function PaymentDialog({
   highlighted,
   isAuthenticated,
   defaultCountry,
+  stretched = false,
+  defaultOpen = false,
+  pulse = false,
 }: {
   tier: "premium" | "expert"
   tierName: string
@@ -38,22 +41,35 @@ export function PaymentDialog({
   highlighted?: boolean
   isAuthenticated: boolean
   defaultCountry: string | null
+  /** Toute la carte parente (position: relative) devient cliquable */
+  stretched?: boolean
+  /** Ouverture automatique (lien « ?formule=… » depuis l'accueil) */
+  defaultOpen?: boolean
+  /** Pulsation discrète du bouton d'appel à l'action */
+  pulse?: boolean
 }) {
+  const [open, setOpen] = useState(defaultOpen && isAuthenticated)
   const buttonClass = cn(
-    "h-12 w-full text-base",
-    highlighted ? "bg-orange text-nuit hover:bg-orange/90" : "bg-vert-fonce hover:bg-vert-fonce/90",
+    "h-12 w-full text-base font-semibold shadow-md transition-[transform,box-shadow,background-color] hover:shadow-lg",
+    highlighted ? "bg-orange text-nuit hover:bg-orange/90" : "bg-vert-fonce text-white hover:bg-vert-fonce/90",
+    pulse && "cta-pulse",
+    // Zone cliquable étendue à toute la carte (pseudo-élément). Aucune transformation sur le bouton :
+    // elle ferait du bouton le bloc conteneur du pseudo-élément et réduirait la zone cliquable.
+    stretched
+      ? "after:absolute after:inset-0 after:rounded-3xl after:content-[''] active:translate-none!"
+      : "hover:-translate-y-0.5",
   )
 
   if (!isAuthenticated) {
     return (
       <Button asChild size="lg" className={buttonClass}>
-        <Link href="/auth?mode=inscription&next=/abonnement">{label}</Link>
+        <Link href={`/auth?mode=inscription&next=${encodeURIComponent(`/abonnement?formule=${tier}`)}`}>{label}</Link>
       </Button>
     )
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className={buttonClass}>
           {label}

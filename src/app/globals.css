@@ -175,6 +175,26 @@
 .livre-pages .fiche-ingredient {
   break-inside: avoid;
 }
+/* Texte du livre : 18 px minimum (19 px sur grand écran) */
+.livre-pages.prose-vitalya {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+@media (min-width: 1024px) {
+  .livre-pages.prose-vitalya {
+    font-size: 1.1875rem;
+  }
+}
+/* Composants à taille propre (encadrés, tableaux…) : jamais moins de 18 px dans le livre */
+.livre-pages :where(p, li, td, th, blockquote) {
+  font-size: max(1.125rem, 1em);
+}
+/* Paragraphe plus long qu'une page : jamais une ligne isolée en bas ou en haut de page */
+.livre-pages p,
+.livre-pages li {
+  orphans: 3;
+  widows: 3;
+}
 .livre-pages h2,
 .livre-pages h3 {
   break-after: avoid;
@@ -234,6 +254,17 @@
 @media (prefers-reduced-motion: no-preference) {
   .fondu-entree {
     animation: fondu-entree 300ms ease-out;
+  }
+}
+
+/* ═══ Appel à l'action : pulsation discrète (désactivée si mouvement réduit) ═══ */
+@keyframes cta-pulse {
+  0%, 100% { box-shadow: 0 4px 14px rgb(13 107 74 / 0.18), 0 0 0 0 rgb(232 129 58 / 0.45); }
+  50% { box-shadow: 0 4px 14px rgb(13 107 74 / 0.18), 0 0 0 10px rgb(232 129 58 / 0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cta-pulse {
+    animation: cta-pulse 2.6s ease-in-out infinite;
   }
 }
 

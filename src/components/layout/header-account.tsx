@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { LayoutDashboard } from "lucide-react"
+import { setAccount, useAccount } from "@/components/layout/account-store"
 import { Button } from "@/components/ui/button"
-import { isAccessLevel, type AccessLevel } from "@/lib/constants"
+import { isAccessLevel } from "@/lib/constants"
 import { loadSupabase } from "@/lib/supabase/lazy"
 
 // Menu du compte (Radix) : téléchargé seulement pour un lecteur connecté
@@ -16,8 +18,6 @@ function hasAuthCookie() {
   return document.cookie.split(";").some((part) => part.trim().startsWith("sb-"))
 }
 
-type Account = { name: string; email: string; avatarUrl: string | null; tier: AccessLevel; isStaff: boolean }
-
 /**
  * Zone « compte » de l'en-tête, résolue dans le navigateur.
  * L'en-tête ne lit plus les cookies côté serveur : les pages publiques
@@ -26,7 +26,7 @@ type Account = { name: string; email: string; avatarUrl: string | null; tier: Ac
  */
 export function HeaderAccount() {
   const pathname = usePathname()
-  const [account, setAccount] = useState<Account | null>(null)
+  const account = useAccount()
 
   useEffect(() => {
     if (!hasAuthCookie()) {
@@ -56,6 +56,7 @@ export function HeaderAccount() {
         avatarUrl: profile.avatar_url,
         tier: isAccessLevel(tier) ? tier : "free",
         isStaff: profile.role === "admin" || profile.role === "editor",
+        isAdmin: profile.role === "admin",
       })
     }
 
@@ -75,7 +76,19 @@ export function HeaderAccount() {
   }, [pathname])
 
   if (account) {
-    return <UserMenu name={account.name} email={account.email} avatarUrl={account.avatarUrl} tier={account.tier} isStaff={account.isStaff} />
+    return (
+      <>
+        {/* Accès direct au back-office pour les administrateurs (desktop ; sur mobile : menu) */}
+        {account.isAdmin && (
+          <Button asChild size="sm" className="hidden bg-vert-fonce text-white hover:bg-vert-fonce/90 lg:inline-flex">
+            <Link href="/admin">
+              <LayoutDashboard className="size-4" aria-hidden /> Dashboard
+            </Link>
+          </Button>
+        )}
+        <UserMenu name={account.name} email={account.email} avatarUrl={account.avatarUrl} tier={account.tier} isStaff={account.isStaff} />
+      </>
+    )
   }
 
   return (
