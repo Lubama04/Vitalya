@@ -1,6 +1,7 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react"
 import dynamic from "next/dynamic"
 import { compileMDX } from "next-mdx-remote/rsc"
+import remarkGfm from "remark-gfm"
 import { ALireSuite, type MdxArticleContext } from "@/components/mdx/a-lire-suite"
 import {
   ARetenir,
@@ -244,6 +245,15 @@ function remarkHeadings(headings: TocHeading[]) {
   }
 }
 
+/** Tableaux Markdown : conteneur défilant horizontalement sur mobile, accessible au clavier. */
+function TableauMarkdown({ children, ...rest }: ComponentPropsWithoutRef<"table">) {
+  return (
+    <div className="tableau-vitalya" role="region" aria-label="Tableau" tabIndex={0}>
+      <table {...rest}>{children}</table>
+    </div>
+  )
+}
+
 /** Liens : seuls http(s), mailto, chemins internes et ancres sont cliquables. */
 function SafeLink({ href, children, ...rest }: ComponentPropsWithoutRef<"a">) {
   if (!isSafeHref(href)) return <span>{children}</span>
@@ -319,6 +329,7 @@ export async function MdxContent({
     ALireSuite: ({ titre }: { titre?: string }) => <ALireSuite titre={titre} context={context} />,
     a: SafeLink,
     img: SafeImage,
+    table: TableauMarkdown,
   }
 
   try {
@@ -329,7 +340,8 @@ export async function MdxContent({
         // blockJS reste actif en seconde barrière après notre liste blanche
         blockJS: true,
         blockDangerousJS: true,
-        mdxOptions: { remarkPlugins: [remarkAllowlist, remarkHeadings(headings)] },
+        // remark-gfm : tableaux « | col | col | », texte barré, listes de tâches
+        mdxOptions: { remarkPlugins: [remarkGfm, remarkAllowlist, remarkHeadings(headings)] },
       },
     })
     return content

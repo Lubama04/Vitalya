@@ -37,6 +37,7 @@ import {
   PanelsTopLeft,
   Sparkle,
   StickyNote,
+  Table2,
   Type,
   BrainCircuit,
   ChartBarBig,
@@ -310,6 +311,22 @@ export const CATALOG: CatalogGroup[] = [
         action: {
           kind: "snippet",
           build: (s) => block(`<NoteBas>\n${s || `${CARET}Cet article ne remplace pas l'avis d'un professionnel de santé.`}\n</NoteBas>`),
+        },
+      },
+      {
+        id: "tableau",
+        label: "Tableau",
+        hint: "Tableau Markdown : 3 colonnes, 2 lignes d'exemple",
+        icon: Table2,
+        action: {
+          kind: "snippet",
+          build: () =>
+            block(
+              `| ${CARET}Colonne 1 | Colonne 2 | Colonne 3 |
+| --- | --- | --- |
+| Valeur | Valeur | Valeur |
+| Valeur | Valeur | Valeur |`,
+            ),
         },
       },
     ],
