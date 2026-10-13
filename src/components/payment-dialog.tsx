@@ -213,6 +213,13 @@ function PaymentForm({ tier, defaultCountry }: { tier: "premium" | "expert"; def
       <p className="flex items-center justify-center gap-2 text-center text-sm font-medium text-vert-fonce">
         <ShieldCheck className="size-4 shrink-0" aria-hidden /> Paiement 100% sécurisé et crypté
       </p>
+      <p className="text-center text-xs text-muted-foreground">
+        En payant, vous acceptez les{" "}
+        <Link href="/cgv" target="_blank" className="underline underline-offset-2 hover:text-nuit">
+          conditions générales de vente
+        </Link>
+        .
+      </p>
     </form>
   )
 }

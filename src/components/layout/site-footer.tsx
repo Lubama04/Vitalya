@@ -56,6 +56,13 @@ export async function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-white/50 sm:flex-row sm:px-6">
           <p>© {year} Vitalya. Tous droits réservés.</p>
+          <nav aria-label="Informations légales">
+            <ul className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+              <li><Link href="/mentions-legales" className="transition-colors hover:text-or">Mentions légales</Link></li>
+              <li><Link href="/cgv" className="transition-colors hover:text-or">CGV</Link></li>
+              <li><Link href="/confidentialite" className="transition-colors hover:text-or">Confidentialité</Link></li>
+            </ul>
+          </nav>
           <p>Les contenus de Vitalya ne remplacent pas un avis médical.</p>
         </div>
       </div>
