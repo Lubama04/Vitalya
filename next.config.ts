@@ -12,8 +12,8 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  // Couvertures d'articles hébergées par Unsplash (liens directs)
-  `img-src 'self' data: blob: https://images.unsplash.com${supabaseHost ? ` https://${supabaseHost}` : ""}`,
+  // Images de contenu : stockage Vitalya, Unsplash ou toute autre source https choisie par l'équipe
+  `img-src 'self' data: blob: https:`,
   "font-src 'self' data:",
   `connect-src 'self'${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
   `media-src 'self' blob:${supabaseHost ? ` https://${supabaseHost}` : ""}`,

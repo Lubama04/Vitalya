@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import Link from "next/link"
 import { Clock } from "lucide-react"
 import { AccessBadge } from "@/components/article/access-badge"
@@ -30,7 +30,7 @@ export function ArticleCard({ article, variant = "default", priority = false }: 
         )}
       >
         {article.coverImage ? (
-          <Image
+          <ContentImage
             src={article.coverImage}
             alt=""
             fill

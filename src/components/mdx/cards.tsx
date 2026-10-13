@@ -1,6 +1,6 @@
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import { FlaskConical, Globe2, Leaf, ScrollText, Sprout, TriangleAlert } from "lucide-react"
-import { isAllowedMediaUrl } from "@/lib/mdx/urls"
+import { isAllowedImageUrl } from "@/lib/mdx/urls"
 import { cn } from "@/lib/utils"
 
 // ═══════════════════════════════════════════════════════════════
@@ -114,8 +114,8 @@ function initials(name: string): string {
 export function ProfilAuteur({ author, className }: { author: AuthorProfile; className?: string }) {
   return (
     <aside className={cn("my-12 flex flex-col gap-5 rounded-3xl border bg-creme/70 p-6 sm:flex-row sm:items-center sm:p-7", className)} aria-label="À propos de l'auteur">
-      {isAllowedMediaUrl(author.photo_url) ? (
-        <Image src={author.photo_url} alt="" width={80} height={80} className="size-20 shrink-0 rounded-full object-cover ring-4 ring-white" />
+      {isAllowedImageUrl(author.photo_url) ? (
+        <ContentImage src={author.photo_url} alt="" width={80} height={80} className="size-20 shrink-0 rounded-full object-cover ring-4 ring-white" />
       ) : (
         <span className="flex size-20 shrink-0 items-center justify-center rounded-full bg-vert-fonce font-heading text-2xl font-bold text-or ring-4 ring-white">
           {initials(author.name)}

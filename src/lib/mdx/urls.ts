@@ -14,6 +14,26 @@ export function isAllowedMediaUrl(url: unknown): url is string {
   return MEDIA_BUCKETS.some((bucket) => rest.startsWith(`${bucket}/`)) && !rest.includes("..")
 }
 
+/**
+ * Image de contenu : fichier local, stockage Vitalya ou n'importe quelle URL https
+ * (Unsplash, etc.). Le contenu est rédigé uniquement par l'équipe ; http, data: et
+ * javascript: restent refusés.
+ */
+export function isAllowedImageUrl(url: unknown): url is string {
+  if (typeof url !== "string" || url.length > 1000 || /\s/.test(url)) return false
+  if (isAllowedMediaUrl(url)) return true
+  try {
+    return new URL(url).protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
+/** Source prise en charge par l'optimiseur d'images (voir images.remotePatterns de next.config.ts). */
+export function isOptimizableImage(url: string): boolean {
+  return (url.startsWith("/") && !url.startsWith("//")) || url.startsWith(`${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`) || url.startsWith("https://images.unsplash.com/")
+}
+
 /** Lien autorisé : http(s), mailto, chemin interne ou ancre. */
 export function isSafeHref(href: unknown): href is string {
   return typeof href === "string" && href.length <= 2000 && /^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(href)

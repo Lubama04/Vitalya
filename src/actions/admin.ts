@@ -7,10 +7,11 @@ import { Resend } from "resend"
 import { z } from "zod"
 import { getViewer, isStaff } from "@/lib/auth"
 import { ACCESS_LEVELS, computeReadingTime, ROLES } from "@/lib/constants"
-import { publicEnv, siteUrl } from "@/lib/env"
+import { siteUrl } from "@/lib/env"
 import { features, serverEnv } from "@/lib/env.server"
 import { sendEmails } from "@/lib/email"
 import { newArticleEmailHtml, newsletterHtml } from "@/lib/newsletter-email"
+import { isAllowedImageUrl } from "@/lib/mdx/urls"
 import { createClient } from "@/lib/supabase/server"
 import { fail, ok, type ActionState } from "@/actions/types"
 
@@ -23,8 +24,6 @@ async function assertStaff() {
 }
 
 // ─── Articles ─────────────────────────────────────────────────
-
-const coverPrefix = `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/`
 
 const articleSchema = z.object({
   id: z.uuid().optional(),
@@ -39,11 +38,9 @@ const articleSchema = z.object({
   coverImage: z
     .string()
     .trim()
-    .max(500)
-    .refine(
-      (value) => value === "" || /^\/covers\/[\w.-]+$/.test(value) || value.startsWith(coverPrefix),
-      "L'image doit provenir du stockage Vitalya",
-    ),
+    .max(1000)
+    // Stockage Vitalya, fichier du site ou URL https externe (Unsplash…) : rédaction réservée à l'équipe
+    .refine((value) => value === "" || isAllowedImageUrl(value), "Adresse d'image invalide (https:// requis)."),
   category: z.union([z.uuid(), z.literal("")]),
   authorProfileId: z.union([z.uuid(), z.literal("")]),
   accessLevel: z.enum(ACCESS_LEVELS),
@@ -190,8 +187,6 @@ export async function deleteArticle(formData: FormData): Promise<void> {
 
 // ─── Auteurs ──────────────────────────────────────────────────
 
-const mediaPrefix = `${publicEnv.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/article-media/`
-
 const authorSchema = z.object({
   id: z.uuid().optional(),
   name: z.string().trim().min(2, "Nom trop court").max(120, "Nom trop long"),
@@ -201,8 +196,8 @@ const authorSchema = z.object({
   photoUrl: z
     .string()
     .trim()
-    .max(600)
-    .refine((value) => value === "" || value.startsWith(mediaPrefix), "La photo doit provenir du stockage Vitalya"),
+    .max(1000)
+    .refine((value) => value === "" || isAllowedImageUrl(value), "Adresse de photo invalide (https:// requis)."),
 })
 
 export async function saveAuthor(_prev: ActionState, formData: FormData): Promise<ActionState> {

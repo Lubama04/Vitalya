@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ArrowLeft, CalendarDays, Clock, Eye, Pencil } from "lucide-react"
@@ -100,7 +100,7 @@ export default async function ArticlePage({ params }: Props) {
       {/* ─── Couverture pleine largeur ─── */}
       <header className="relative isolate flex min-h-[min(72vh,760px)] items-end overflow-hidden bg-nuit text-white">
         {article.coverImage && (
-          <Image
+          <ContentImage
             src={article.coverImage}
             alt=""
             fill

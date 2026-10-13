@@ -70,7 +70,7 @@ export function AuthorForm({ author, onDone }: { author: EditableAuthor; onDone?
         <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm font-medium hover:bg-vert-pale">
           {uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
           {photoUrl ? "Changer la photo" : "Ajouter une photo"}
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={onPhoto} className="sr-only" disabled={uploading} />
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" onChange={onPhoto} className="sr-only" disabled={uploading} />
         </label>
         {photoUrl && (
           <button type="button" onClick={() => setPhotoUrl("")} className="text-xs text-red-600 hover:underline">

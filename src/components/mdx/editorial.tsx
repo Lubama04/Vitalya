@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import type { ReactNode } from "react"
 import Link from "next/link"
 import {
@@ -18,7 +18,7 @@ import {
   TriangleAlert,
 } from "lucide-react"
 import { typoStyle } from "@/components/mdx/typography"
-import { isAllowedMediaUrl, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
+import { isAllowedImageUrl, isExternalHref, isSafeHref } from "@/lib/mdx/urls"
 import { cn } from "@/lib/utils"
 
 // Composants éditoriaux autorisés dans les articles.
@@ -229,8 +229,8 @@ export function AvisExpert({
         {children}
       </blockquote>
       <div className="mt-6 flex items-center gap-4">
-        {isAllowedMediaUrl(photo) ? (
-          <Image src={photo} alt="" width={56} height={56} className="size-14 rounded-full object-cover ring-2 ring-or" />
+        {isAllowedImageUrl(photo) ? (
+          <ContentImage src={photo} alt="" width={56} height={56} className="size-14 rounded-full object-cover ring-2 ring-or" />
         ) : (
           <span className="flex size-14 items-center justify-center rounded-full bg-or font-heading text-lg font-bold text-nuit">
             {initials(nom ?? "?")}

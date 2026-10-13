@@ -1,7 +1,7 @@
 "use client"
 
 import { useActionState, useEffect, useState } from "react"
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import Link from "next/link"
 import { ExternalLink, ImagePlus, Loader2, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { ACCESS_LABELS, ACCESS_LEVELS, slugify, type AccessLevel } from "@/lib/constants"
-import { createClient } from "@/lib/supabase/client"
+import { MEDIA_RULES, uploadMedia, validateMedia } from "@/components/admin/editor/upload"
+import { isAllowedImageUrl } from "@/lib/mdx/urls"
 
 export type EditableArticle = {
   id?: string
@@ -30,8 +31,6 @@ export type EditableArticle = {
   publishedAt: string | null
 }
 
-const COVER_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"]
-const COVER_MAX_SIZE = 5 * 1024 * 1024
 
 /** ISO → valeur d'un champ datetime-local (heure locale du navigateur). */
 function toLocalInput(iso: string | null): string {
@@ -83,28 +82,29 @@ export function ArticleEditor({
     const file = event.target.files?.[0]
     event.target.value = ""
     if (!file) return
-    if (!COVER_TYPES.includes(file.type)) return toast.error("Format accepté : JPEG, PNG, WebP ou AVIF.")
-    if (file.size > COVER_MAX_SIZE) return toast.error("Image trop lourde (5 Mo maximum).")
+    const invalid = validateMedia(file, "image")
+    if (invalid) return toast.error(invalid)
 
     setUploading(true)
     try {
-      const supabase = createClient()
-      // Nom de fichier généré : le nom d'origine n'est jamais conservé
-      const extension = file.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg"
-      const path = `${new Date().getFullYear()}/${crypto.randomUUID()}.${extension}`
-      const { error } = await supabase.storage.from("covers").upload(path, file, {
-        contentType: file.type,
-        cacheControl: "31536000",
-        upsert: false,
-      })
-      if (error) throw error
-      setCoverImage(supabase.storage.from("covers").getPublicUrl(path).data.publicUrl)
+      // Envoi dans le bucket « article-media » (même stockage que les images du contenu)
+      setCoverImage(await uploadMedia(file, "image"))
       toast.success("Image importée")
-    } catch {
-      toast.error("Import impossible. Vérifiez vos droits et réessayez.")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import impossible. Réessayez.")
     } finally {
       setUploading(false)
     }
+  }
+
+  // Couverture par adresse externe (Unsplash, etc.)
+  const [coverUrlDraft, setCoverUrlDraft] = useState("")
+  function applyCoverUrl() {
+    const url = coverUrlDraft.trim()
+    if (!isAllowedImageUrl(url)) return toast.error("Collez une adresse d'image complète commençant par https://")
+    setCoverImage(url)
+    setCoverUrlDraft("")
+    toast.success("Couverture mise à jour")
   }
 
   return (
@@ -191,19 +191,40 @@ export function ArticleEditor({
             <p className="text-sm font-medium">Couverture</p>
             <div className="flex items-center gap-3">
               <div className="relative aspect-[16/10] w-28 shrink-0 overflow-hidden rounded-lg bg-muted">
-                {coverImage && <Image src={coverImage} alt="" fill sizes="112px" className="object-cover" />}
+                {coverImage && <ContentImage src={coverImage} alt="" fill sizes="112px" className="object-cover" />}
               </div>
               <div className="flex flex-1 flex-col gap-1.5">
                 <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-2 py-2 text-xs font-medium hover:bg-vert-pale">
                   {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <ImagePlus className="size-3.5" />}
                   {uploading ? "Import…" : coverImage ? "Remplacer" : "Importer"}
-                  <input type="file" accept={COVER_TYPES.join(",")} onChange={uploadCover} className="sr-only" disabled={uploading} />
+                  <input type="file" accept={MEDIA_RULES.image.types.join(",")} onChange={uploadCover} className="sr-only" disabled={uploading} />
                 </label>
                 {coverImage && (
                   <button type="button" onClick={() => setCoverImage("")} className="text-xs text-red-600 hover:underline">Retirer</button>
                 )}
               </div>
             </div>
+            <div className="flex gap-1.5">
+              <Input
+                type="url"
+                inputMode="url"
+                value={coverUrlDraft}
+                onChange={(event) => setCoverUrlDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault()
+                    applyCoverUrl()
+                  }
+                }}
+                placeholder="ou coller une URL https://…"
+                aria-label="Adresse d'une image de couverture"
+                className="h-8 text-xs"
+              />
+              <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 px-2 text-xs" onClick={applyCoverUrl} disabled={!coverUrlDraft.trim()}>
+                OK
+              </Button>
+            </div>
+            <p className="text-[0.7rem] text-muted-foreground">{MEDIA_RULES.image.label}</p>
           </div>
 
           <div className="flex gap-2 pt-1">

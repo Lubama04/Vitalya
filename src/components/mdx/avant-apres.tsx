@@ -1,24 +1,24 @@
 "use client"
 
-import Image from "next/image"
+import { ContentImage } from "@/components/content-image"
 import { useId, useState } from "react"
-import { isAllowedMediaUrl } from "@/lib/mdx/urls"
+import { isAllowedImageUrl } from "@/lib/mdx/urls"
 
 /** Comparateur avant / après avec curseur (clavier et tactile via input range). */
 export function AvantApres({ avant, apres, legende }: { avant?: string; apres?: string; legende?: string }) {
   const [position, setPosition] = useState(50)
   const id = useId()
 
-  if (!isAllowedMediaUrl(avant) || !isAllowedMediaUrl(apres)) {
+  if (!isAllowedImageUrl(avant) || !isAllowedImageUrl(apres)) {
     return <p className="my-6 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">Comparaison indisponible (images non autorisées).</p>
   }
 
   return (
     <figure className="my-10">
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted select-none">
-        <Image src={apres} alt="Après" fill sizes="(max-width: 768px) 100vw, 720px" className="object-cover" draggable={false} />
+        <ContentImage src={apres} alt="Après" fill sizes="(max-width: 768px) 100vw, 720px" className="object-cover" draggable={false} />
         <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
-          <Image src={avant} alt="Avant" fill sizes="(max-width: 768px) 100vw, 720px" className="object-cover" draggable={false} />
+          <ContentImage src={avant} alt="Avant" fill sizes="(max-width: 768px) 100vw, 720px" className="object-cover" draggable={false} />
         </div>
         <div className="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow-[0_0_8px_rgba(0,0,0,0.4)]" style={{ left: `${position}%` }}>
           <span className="absolute top-1/2 left-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-sm font-bold text-vert-fonce shadow-lg">

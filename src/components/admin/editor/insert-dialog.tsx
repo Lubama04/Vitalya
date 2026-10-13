@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 import type { DialogField, DialogSpec } from "./catalog"
 import { MEDIA_RULES, uploadMedia, validateMedia, type MediaKind } from "./upload"
+import { isAllowedImageUrl } from "@/lib/mdx/urls"
 
 type ArticleOption = { id: string; title: string; slug: string; published: boolean }
 
@@ -87,6 +88,7 @@ function MediaField({
 }) {
   const [uploading, setUploading] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  const [urlDraft, setUrlDraft] = useState("")
   const urls: string[] = multiple ? (JSON.parse(value || "[]") as string[]) : value ? [value] : []
 
   async function handleFiles(files: FileList | null) {
@@ -111,6 +113,15 @@ function MediaField({
       setUploading(0)
       onBusy(false)
     }
+  }
+
+  // Image externe (Unsplash, etc.) : adresse https collée par l'équipe
+  function addUrl() {
+    const url = urlDraft.trim()
+    if (!isAllowedImageUrl(url)) return setError("Collez une adresse d'image complète commençant par https://")
+    setError(null)
+    setUrlDraft("")
+    onChange(multiple ? JSON.stringify([...urls, url].slice(0, 24)) : url)
   }
 
   function remove(url: string) {
@@ -158,6 +169,33 @@ function MediaField({
             aria-label={field.label}
           />
         </label>
+      )}
+      {kind === "image" && (multiple || urls.length === 0) && (
+        <div className="flex gap-1.5">
+          <input
+            type="url"
+            inputMode="url"
+            value={urlDraft}
+            onChange={(event) => setUrlDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                addUrl()
+              }
+            }}
+            placeholder="ou coller une URL https://…"
+            aria-label={`${field.label} : adresse externe`}
+            className="h-9 min-w-0 flex-1 rounded-md border border-input bg-white px-3 text-sm focus-visible:ring-2 focus-visible:ring-vert-emeraude focus-visible:outline-none"
+          />
+          <button
+            type="button"
+            onClick={addUrl}
+            disabled={!urlDraft.trim()}
+            className="h-9 shrink-0 rounded-md border px-3 text-sm font-medium hover:bg-vert-pale disabled:opacity-50"
+          >
+            Ajouter
+          </button>
+        </div>
       )}
       <p className="text-xs text-muted-foreground">{MEDIA_RULES[kind].label}</p>
       {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
