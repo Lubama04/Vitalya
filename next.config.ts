@@ -12,7 +12,8 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob:${supabaseHost ? ` https://${supabaseHost}` : ""}`,
+  // Couvertures d'articles hébergées par Unsplash (liens directs)
+  `img-src 'self' data: blob: https://images.unsplash.com${supabaseHost ? ` https://${supabaseHost}` : ""}`,
   "font-src 'self' data:",
   `connect-src 'self'${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
   `media-src 'self' blob:${supabaseHost ? ` https://${supabaseHost}` : ""}`,
@@ -75,9 +76,11 @@ const nextConfig: NextConfig = {
   experimental: { optimizePackageImports: ["radix-ui"] },
   images: {
     formats: ["image/avif", "image/webp"],
-    remotePatterns: supabaseHost
-      ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
-      : [],
+    remotePatterns: [
+      ...(supabaseHost ? [{ protocol: "https" as const, hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }] : []),
+      // Couvertures d'articles en liens directs Unsplash
+      { protocol: "https" as const, hostname: "images.unsplash.com", pathname: "/**" },
+    ],
   },
   async headers() {
     return [
