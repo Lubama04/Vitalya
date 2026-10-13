@@ -3,13 +3,12 @@
 import { revalidatePath } from "next/cache"
 import { after } from "next/server"
 import { redirect } from "next/navigation"
-import { Resend } from "resend"
 import { z } from "zod"
 import { getViewer, isStaff } from "@/lib/auth"
 import { ACCESS_LEVELS, computeReadingTime, ROLES } from "@/lib/constants"
 import { siteUrl } from "@/lib/env"
-import { features, serverEnv } from "@/lib/env.server"
-import { sendEmails } from "@/lib/email"
+import { features } from "@/lib/env.server"
+import { NEWSLETTER_TEST_EMAIL, sendEmailBatch, sendEmails } from "@/lib/email"
 import { newArticleEmailHtml, newsletterHtml } from "@/lib/newsletter-email"
 import { isAllowedImageUrl } from "@/lib/mdx/urls"
 import { createClient } from "@/lib/supabase/server"
@@ -284,13 +283,12 @@ export async function updateMember(_prev: ActionState, formData: FormData): Prom
 // ─── Newsletter ───────────────────────────────────────────────
 
 const newsletterSchema = z.object({
-  subject: z.string().trim().min(3, "Objet trop court").max(200, "Objet trop long"),
-  content: z.string().trim().min(10, "Contenu trop court").max(100000),
+  subject: z.string().trim().min(3, "Objet de l'email obligatoire (3 caractères minimum)").max(200, "Objet trop long"),
+  content: z.string().trim().min(10, "Contenu trop court").max(200000),
+  format: z.enum(["markdown", "html"]).default("markdown"),
   mode: z.enum(["test", "envoi"]),
   audience: z.enum(["tous", "gratuits", "premium", "expert"]).default("tous"),
 })
-
-const BATCH_SIZE = 100
 
 export async function sendNewsletter(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const viewer = await assertStaff()
@@ -298,62 +296,58 @@ export async function sendNewsletter(_prev: ActionState, formData: FormData): Pr
 
   const parsed = newsletterSchema.safeParse({
     subject: formData.get("subject"),
-    content: formData.get("content"),
+    content: String(formData.get("content") ?? "").replace(/\r\n?/g, "\n"),
+    format: formData.get("format") ?? undefined,
     mode: formData.get("mode"),
     audience: formData.get("audience") ?? undefined,
   })
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Données invalides")
+  if (!features.email) return fail("Resend n'est pas configuré : ajoutez RESEND_API_KEY dans les variables d'environnement.")
 
-  if (!serverEnv.RESEND_API_KEY) {
-    return fail("Resend n'est pas configuré : ajoutez RESEND_API_KEY dans les variables d'environnement.")
-  }
-  const resend = new Resend(serverEnv.RESEND_API_KEY)
-  const { subject, content, mode, audience } = parsed.data
+  const { subject, content, format, mode, audience } = parsed.data
   const supabase = await createClient()
 
-  // Destinataires : l'éditeur seul (test) ou les inscrits actifs de l'audience choisie
+  // Destinataires : adresse de test de la rédaction, ou inscrits actifs de l'audience choisie
   // (filtrage par niveau effectif fait en base, réservé à l'équipe)
-  let recipients: { email: string; token: string }[]
+  let recipients: { email: string; token: string; firstName: string | null }[]
   if (mode === "test") {
-    recipients = [{ email: viewer.email, token: "00000000-0000-0000-0000-000000000000" }]
+    recipients = [
+      { email: NEWSLETTER_TEST_EMAIL, token: "00000000-0000-0000-0000-000000000000", firstName: viewer.fullName?.split(" ")[0] ?? null },
+    ]
   } else {
     recipients = []
     for (let from = 0; ; from += 1000) {
       const { data, error } = await supabase.rpc("newsletter_recipients", { p_audience: audience }).range(from, from + 999)
       if (error) return fail("Lecture des abonnés impossible.")
-      recipients.push(...data.map((row) => ({ email: row.email, token: row.unsubscribe_token })))
+      recipients.push(...data.map((row) => ({ email: row.email, token: row.unsubscribe_token, firstName: row.first_name })))
       if (data.length < 1000) break
     }
     if (recipients.length === 0) return fail("Aucun abonné actif dans cette audience.")
   }
 
-  let sent = 0
-  for (let index = 0; index < recipients.length; index += BATCH_SIZE) {
-    const batch = recipients.slice(index, index + BATCH_SIZE).map((recipient) => {
+  const { sent, error } = await sendEmailBatch(
+    recipients.map((recipient) => {
       const unsubscribeUrl = `${siteUrl}/newsletter/desinscription?token=${recipient.token}`
       return {
-        from: serverEnv.RESEND_FROM_EMAIL,
-        to: [recipient.email],
+        to: recipient.email,
         subject: mode === "test" ? `[TEST] ${subject}` : subject,
-        html: newsletterHtml({ subject, body: content, siteUrl, unsubscribeUrl }),
+        html: newsletterHtml({ subject, body: content, siteUrl, unsubscribeUrl, format, firstName: recipient.firstName }),
         headers: {
           "List-Unsubscribe": `<${siteUrl}/api/newsletter/desinscription?token=${recipient.token}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       }
-    })
-    const { error } = await resend.batch.send(batch)
-    if (error) {
-      console.error("sendNewsletter", error.message)
-      return fail(sent > 0 ? `Envoi interrompu après ${sent} emails.` : "Envoi impossible : vérifiez la configuration Resend.")
-    }
-    sent += batch.length
+    }),
+  )
+  if (error) {
+    return fail(sent > 0 ? `Envoi interrompu après ${sent} emails (${error}).` : `Envoi impossible : ${error}`)
   }
 
   if (mode === "envoi") {
     await supabase.from("newsletters").insert({
       subject,
       content,
+      format,
       sent_at: new Date().toISOString(),
       recipients_count: sent,
       audience,
@@ -362,5 +356,29 @@ export async function sendNewsletter(_prev: ActionState, formData: FormData): Pr
     revalidatePath("/admin/newsletter")
     return ok(`Newsletter envoyée à ${sent} abonné·e·s.`)
   }
-  return ok(`Email de test envoyé à ${viewer.email}.`)
+  return ok(`Email de test envoyé à ${NEWSLETTER_TEST_EMAIL}.`)
+}
+
+// ─── Modèles de newsletter ────────────────────────────────────
+
+const templateSchema = z.object({
+  name: z.string().trim().min(2, "Nom du modèle trop court").max(120),
+  subject: z.string().trim().max(200).default(""),
+  content: z.string().trim().min(10, "Contenu trop court").max(200000),
+  format: z.enum(["markdown", "html"]),
+})
+
+/** Enregistre (ou remplace, à nom identique) un modèle réutilisable. */
+export async function saveNewsletterTemplate(input: unknown): Promise<ActionState> {
+  const viewer = await assertStaff()
+  if (!viewer) return fail("Accès refusé.")
+  const parsed = templateSchema.safeParse(input)
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Données invalides")
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("newsletter_templates")
+    .upsert({ ...parsed.data, content: parsed.data.content.replace(/\r\n?/g, "\n"), updated_at: new Date().toISOString() }, { onConflict: "name" })
+  if (error) return fail("Enregistrement du modèle impossible.")
+  revalidatePath("/admin/newsletter")
+  return ok(`Modèle « ${parsed.data.name} » enregistré.`)
 }

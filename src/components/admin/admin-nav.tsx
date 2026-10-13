@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, FileText, Mail, PenLine, Users } from "lucide-react"
+import { BarChart3, BookOpen, FileText, Mail, PenLine, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const LINKS = [
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/auteurs", label: "Auteurs", icon: PenLine },
   { href: "/admin/abonnes", label: "Abonnés", icon: Users },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/magazines", label: "Magazines", icon: BookOpen },
 ] as const
 
 export function AdminNav() {

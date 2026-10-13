@@ -1,6 +1,5 @@
-import "server-only"
-
 // Gabarits HTML des emails Vitalya (newsletter, bienvenue, nouvel article, paiement).
+// Module sans dépendance serveur : également utilisé pour l'aperçu en direct de l'éditeur newsletter.
 // Tout contenu variable est TOUJOURS échappé ; le corps de newsletter reçoit un markdown minimal.
 
 export function escapeHtml(value: string): string {
@@ -12,28 +11,61 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;")
 }
 
-/** Markdown minimal : paragraphes, **gras**, *italique*, [lien](https://…), ## titres. */
+const CTA_COLORS = { vert: { bg: "#0D6B4A", fg: "#FFFFFF" }, orange: { bg: "#E8813A", fg: "#1E2532" } } as const
+
+/** Bouton d'appel à l'action compatible messageries (lien stylé en ligne). */
+export function ctaButton(label: string, href: string, color: keyof typeof CTA_COLORS = "vert"): string {
+  const { bg, fg } = CTA_COLORS[color]
+  return `<p style="margin:24px 0;text-align:center"><a href="${href}" style="display:inline-block;background:${bg};color:${fg};text-decoration:none;font-weight:600;padding:13px 26px;border-radius:10px">${label}</a></p>`
+}
+
+function inline(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    // Liens limités à https (l'URL est déjà échappée)
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2" style="color:#13805A;text-decoration:underline">$1</a>')
+    .replace(/\n/g, "<br>")
+}
+
+/**
+ * Markdown de la newsletter :
+ * paragraphes, **gras**, *italique*, [lien](https://…), ## titres,
+ * ![texte](https://image) (image), [[Texte|https://lien|vert|orange]] (bouton), --- (séparateur).
+ */
 export function renderNewsletterBody(markdown: string): string {
   return markdown
     .trim()
     .split(/\n{2,}/)
     .map((block) => {
-      let html = escapeHtml(block.trim())
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\*(.+?)\*/g, "<em>$1</em>")
-        // Liens limités à https (l'URL est déjà échappée)
-        .replace(
-          /\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g,
-          '<a href="$2" style="color:#13805A;text-decoration:underline">$1</a>',
-        )
-        .replace(/\n/g, "<br>")
-      if (html.startsWith("## ")) {
-        html = html.slice(3)
-        return `<h2 style="font-family:Georgia,serif;color:#0D6B4A;font-size:22px;margin:28px 0 12px">${html}</h2>`
+      const raw = block.trim()
+      if (/^-{3,}$/.test(raw)) {
+        return '<hr style="border:0;border-top:1px solid #D6F0E6;margin:28px 0">'
       }
-      return `<p style="margin:0 0 16px;line-height:1.7">${html}</p>`
+      const escaped = escapeHtml(raw)
+      const image = escaped.match(/^!\[([^\]]*)\]\((https:\/\/[^)\s]+)\)$/)
+      if (image) {
+        return `<p style="margin:0 0 16px"><img src="${image[2]}" alt="${image[1]}" width="528" style="display:block;width:100%;max-width:528px;height:auto;border:0;border-radius:12px"></p>`
+      }
+      const button = escaped.match(/^\[\[([^|\]]+)\|(https:\/\/[^|\]\s]+)(?:\|(vert|orange))?\]\]$/)
+      if (button) return ctaButton(button[1], button[2], button[3] === "orange" ? "orange" : "vert")
+      if (escaped.startsWith("## ")) {
+        return `<h2 style="font-family:Georgia,serif;color:#0D6B4A;font-size:22px;margin:28px 0 12px">${inline(escaped.slice(3))}</h2>`
+      }
+      return `<p style="margin:0 0 16px;line-height:1.7">${inline(escaped)}</p>`
     })
     .join("\n")
+}
+
+/**
+ * Variables personnalisées : {{prénom}} (prénom de l'abonné, retiré proprement s'il est inconnu :
+ * « Bonjour {{prénom}}, » devient « Bonjour, ») et {{lien_desabonnement}}.
+ */
+export function applyPlaceholders(html: string, values: { firstName: string | null; unsubscribeUrl: string }): string {
+  const name = values.firstName?.trim() ? escapeHtml(values.firstName.trim()) : ""
+  return html
+    .replace(/\s*\{\{\s*pr[ée]nom\s*\}\}/gi, (match) => (name ? `${match.match(/^\s*/)?.[0] ?? ""}${name}` : ""))
+    .replace(/\{\{\s*lien_d[ée]sabonnement\s*\}\}/gi, values.unsubscribeUrl)
 }
 
 /** Paragraphe de texte brut échappé. */
@@ -91,15 +123,33 @@ export function emailLayout(options: {
 </html>`
 }
 
-export function newsletterHtml(options: { subject: string; body: string; siteUrl: string; unsubscribeUrl: string }): string {
-  const { subject, body, siteUrl, unsubscribeUrl } = options
-  return emailLayout({
-    siteUrl,
-    title: subject,
-    contentHtml: renderNewsletterBody(body),
-    cta: { label: "Lire le magazine", href: `${siteUrl}/articles` },
-    footerHtml: `Vous recevez cet email car vous êtes inscrit·e à la lettre Vitalya. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#FFFFFF">Se désinscrire</a>`,
-  })
+export type NewsletterFormat = "markdown" | "html"
+
+/**
+ * Newsletter prête à l'envoi pour un abonné.
+ * markdown : corps mis en page dans le gabarit Vitalya ; html : document HTML complet fourni tel quel.
+ * Dans les deux cas, {{prénom}} et {{lien_desabonnement}} sont remplacés.
+ */
+export function newsletterHtml(options: {
+  subject: string
+  body: string
+  siteUrl: string
+  unsubscribeUrl: string
+  format?: NewsletterFormat
+  firstName?: string | null
+}): string {
+  const { subject, body, siteUrl, unsubscribeUrl, format = "markdown", firstName = null } = options
+  const html =
+    format === "html"
+      ? body
+      : emailLayout({
+          siteUrl,
+          title: subject,
+          contentHtml: renderNewsletterBody(body),
+          cta: { label: "Lire le magazine", href: `${siteUrl}/articles` },
+          footerHtml: `Vous recevez cet email car vous êtes inscrit·e à la lettre Vitalya. <a href="${escapeHtml(unsubscribeUrl)}" style="color:#FFFFFF">Se désinscrire</a>`,
+        })
+  return applyPlaceholders(html, { firstName, unsubscribeUrl })
 }
 
 /** Email de bienvenue envoyé à l'inscription. */

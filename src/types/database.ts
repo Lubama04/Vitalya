@@ -198,6 +198,9 @@ export type Database = {
           date_publication: string
           article_ids: string[]
           couverture_url: string | null
+          couverture_pdf_url: string | null
+          couverture_complete: boolean
+          updated_at: string
           created_at: string
         }
         Insert: {
@@ -207,6 +210,9 @@ export type Database = {
           date_publication: string
           article_ids?: string[]
           couverture_url?: string | null
+          couverture_pdf_url?: string | null
+          couverture_complete?: boolean
+          updated_at?: string
           created_at?: string
         }
         Update: {
@@ -216,6 +222,9 @@ export type Database = {
           date_publication?: string
           article_ids?: string[]
           couverture_url?: string | null
+          couverture_pdf_url?: string | null
+          couverture_complete?: boolean
+          updated_at?: string
           created_at?: string
         }
         Relationships: []
@@ -244,12 +253,43 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_templates: {
+        Row: {
+          id: string
+          name: string
+          format: string
+          subject: string
+          content: string
+          updated_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          format: string
+          subject?: string
+          content: string
+          updated_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          format?: string
+          subject?: string
+          content?: string
+          updated_at?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       newsletters: {
         Row: {
           audience: string
           content: string
           created_at: string
           created_by: string | null
+          format: string
           id: string
           recipients_count: number
           sent_at: string | null
@@ -260,6 +300,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by?: string | null
+          format?: string
           id?: string
           recipients_count?: number
           sent_at?: string | null
@@ -270,6 +311,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string | null
+          format?: string
           id?: string
           recipients_count?: number
           sent_at?: string | null
@@ -548,7 +590,7 @@ export type Database = {
       }
       newsletter_recipients: {
         Args: { p_audience: string }
-        Returns: { email: string; unsubscribe_token: string }[]
+        Returns: { email: string; unsubscribe_token: string; first_name: string | null }[]
       }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

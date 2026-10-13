@@ -71,6 +71,10 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Fichiers lus sur disque par la génération du magazine PDF (polices, logo, couvertures)
+  outputFileTracingIncludes: {
+    "/api/magazine/[numero]/pdf": ["./public/fonts/pdf/**", "./public/brand/**", "./public/covers/**"],
+  },
   reactStrictMode: true,
   // Import ciblé des primitives Radix (le paquet « radix-ui » regroupe tout dans un seul point d'entrée)
   experimental: { optimizePackageImports: ["radix-ui"] },

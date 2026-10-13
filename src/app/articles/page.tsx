@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { Download } from "lucide-react"
+import { FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ArticleGridPage, parsePage } from "@/components/article/article-grid-page"
 import { getLatestArticles } from "@/lib/data"
@@ -32,7 +32,7 @@ export default async function ArticlesPage({
         </div>
         <Button asChild size="lg" className="h-12 bg-vert-fonce px-5 font-semibold text-white hover:bg-vert-fonce/90">
           <Link href="/magazine">
-            <Download className="size-5" aria-hidden /> Télécharger le N°01 (PDF)
+            <FileDown className="size-5" aria-hidden /> Télécharger le N°01 (PDF)
           </Link>
         </Button>
       </header>

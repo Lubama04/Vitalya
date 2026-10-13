@@ -32,7 +32,8 @@ Magazine digital francophone (PWA) consacré à la **santé**, la **beauté** et
 | `/categories/[slug]` | Articles d'une rubrique |
 | `/abonnement` | Offres Gratuit / Premium 6 000 FCFA / Expert 11 000 FCFA, modale de paiement (Mobile Money ou carte bancaire), FAQ |
 | `/abonnement/confirmation` | Retour après paiement : vérification auprès du prestataire, succès (redirection vers `/profil`), échec (réessayer) ou attente (relecture toutes les 5 s). `/abonnement/retour` y redirige |
-| `/magazine` | Numéros du magazine ; `GET /magazine/[numero]/pdf` génère le PDF selon la formule (Premium : articles Expert en résumé ; Expert et équipe : intégral) |
+| `/magazine` | Numéros du magazine ; `GET /api/magazine/[numero]/pdf` : non connecté → `/auth`, Gratuit → `/abonnement`, Premium → articles Expert remplacés par un encart, Expert et équipe → intégral. PDF mis en cache 1 h (bucket privé `magazines-pdf`, Edge Function `magazine-cache`) ; `?apercu=1` (équipe) régénère sans cache |
+| `/admin/magazines` | Numéros : création, couvertures (portrait A4, 800 × 1130 px), articles ordonnés par glisser-déposer, aperçu du sommaire et du PDF |
 | `/abonnement/erreur` | Paiement non abouti, bouton Réessayer |
 | `/auth` | Connexion, inscription, mot de passe oublié (`/auth/callback` pour les liens email) |
 | `/profil` | Espace abonné : formule et moyen de paiement, informations, mot de passe, notifications push, alerte email nouveaux articles, articles aimés |
@@ -74,6 +75,8 @@ Migrations versionnées dans [`supabase/migrations`](supabase/migrations) :
 | `20261009120000_newsletter_ciblage.sql` | audience des newsletters, destinataires par formule, destinataires des alertes |
 | `20261009150000_paiements_fallback.sql` | table `payment_logs`, période d'un mois, détection du premier abonnement |
 | `20261009170000_tarifs.sql` | tarifs : Premium 6 000 FCFA, Expert 11 000 FCFA |
+| `20261013150000_newsletter_modeles_magazine.sql` | prénom des destinataires, modèles de newsletter, couvertures PDF, bucket `magazines-pdf` |
+| `20261013151000_modele_newsletter_lancement.sql` | modèle « Template N°01 — Lancement » |
 | `20261013120000_magazine_editions.sql` | numéros du magazine (`magazine_editions`), N°01 avec les 8 articles |
 | `20261009190000_prix_par_devise.sql` | table `subscription_prices` (prix par devise, modifiables par UPDATE), `price_for`, `create_payment` lit le montant en base |
 
@@ -174,6 +177,8 @@ Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne
 2. **Authentication → SMTP** : configurer un SMTP (ex. Resend `smtp.resend.com`). Le SMTP par défaut de Supabase n'envoie qu'aux membres de l'organisation et est très limité.
 
 ### Resend
+Expéditeur de tous les emails : `Vitalya <newsletter@vitalya.africa>`, réponses vers `flaugustb@gmail.com` (`src/lib/email.ts`) : le domaine `vitalya.africa` doit être vérifié dans Resend. Newsletter : éditeur Vitalya (markdown enrichi : `![image](https://…)`, `[[Bouton|https://…|vert]]`, `---`) ou HTML personnalisé ; variables `{{prénom}}` et `{{lien_desabonnement}}` ; modèles réutilisables (table `newsletter_templates`).
+
 Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` et `RESEND_FROM_EMAIL` sur Vercel. Tous les emails (newsletter, bienvenue, alerte nouvel article, confirmation de paiement) s'activent avec cette clé ; sans elle, ils sont simplement ignorés.
 
 ### Edge Functions de paiement
@@ -221,6 +226,8 @@ Générer des clés VAPID (`npx web-push generate-vapid-keys`) → `NEXT_PUBLIC_
 - Rendu : accueil en ISR (5 min), en-tête sans lecture de cookies côté serveur, middleware court-circuité pour les visiteurs anonymes.
 - SEO : `sitemap.xml` dynamique, `robots.txt`, métadonnées Open Graph / Twitter par article, image de partage générée (titre, rubrique, couverture), JSON-LD `Article` (auteur, dates, éditeur, logo).
 - Emails Resend : bienvenue à l'inscription, confirmation de paiement, bienvenue au premier abonnement payant, alerte nouvel article, newsletter ciblée.
+
+Polices du PDF : Playfair Display et Inter (licence SIL Open Font License), fichiers dans `public/fonts/pdf`.
 
 ## Structure
 

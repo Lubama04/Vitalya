@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { BookOpen, Crown, Download, Gem, Lock } from "lucide-react"
+import { BookOpen, Crown, FileDown, Gem, Lock } from "lucide-react"
 import { ContentImage } from "@/components/content-image"
 import { Button } from "@/components/ui/button"
 import { getViewer, isStaff } from "@/lib/auth"
@@ -73,8 +73,8 @@ export default async function MagazinePage({ searchParams }: { searchParams: Pro
                   {eligible ? (
                     <div className="space-y-2">
                       <Button asChild size="lg" className="cta-pulse h-12 bg-vert-fonce px-6 text-base font-semibold text-white hover:bg-vert-fonce/90">
-                        <a href={`/magazine/${edition.numero}/pdf`} download={`vitalya-n${numero}.pdf`}>
-                          <Download className="size-5" aria-hidden /> Télécharger le N°{numero} (PDF)
+                        <a href={`/api/magazine/${edition.numero}/pdf`} download={`vitalya-n${numero}.pdf`}>
+                          <FileDown className="size-5" aria-hidden /> Télécharger le N°{numero} (PDF)
                         </a>
                       </Button>
                       <p className="text-xs text-muted-foreground">
