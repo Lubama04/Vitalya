@@ -142,7 +142,7 @@ export default async function AdminDashboard() {
                   <td className="py-2 pr-4">{log.provider_attempted}</td>
                   <td className="py-2 pr-4">{log.provider_used ?? "aucun"}</td>
                   <td className="py-2 pr-4">{STATUS_LABELS[log.status] ?? log.status}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums">{log.amount ? `${log.amount.toLocaleString("fr-FR")} ${log.currency ?? ""}` : ""}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums">{log.amount ? `${log.amount.toLocaleString("fr-FR")} ${log.currency === "XAF" || log.currency === "XOF" ? "FCFA" : (log.currency ?? "")}` : ""}</td>
                   <td className="max-w-xs truncate py-2 text-muted-foreground" title={log.error_message ?? undefined}>{log.error_message}</td>
                 </tr>
               ))}

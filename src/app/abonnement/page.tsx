@@ -89,10 +89,15 @@ export default async function PricingPage() {
               </div>
               <p className="mt-4 text-sm text-muted-foreground">{tier.description}</p>
               <p className="mt-6 font-heading text-4xl font-bold whitespace-nowrap text-nuit">
-                {formatFcfa(tier.priceFcfa)}
-                <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
+                {tier.priceFcfa === 0 ? (
+                  "Gratuit"
+                ) : (
+                  <>
+                    {formatFcfa(tier.priceFcfa)}
+                    <span className="font-sans text-base font-normal text-muted-foreground"> /mois</span>
+                  </>
+                )}
               </p>
-              {tier.price > 0 && <p className="mt-1 text-sm text-muted-foreground">environ {tier.price} €</p>}
               <ul className="mt-8 flex-1 space-y-3">
                 {tier.features.map((feature) => (
                   <li key={feature} className="flex gap-3 text-sm">
@@ -111,7 +116,6 @@ export default async function PricingPage() {
                       <PaymentDialog
                         tier={tier.id === "expert" ? "expert" : "premium"}
                         tierName={tier.name}
-                        priceEur={tier.price}
                     priceFcfa={tier.priceFcfa}
                         label="Prolonger d'un mois"
                         isAuthenticated
@@ -123,7 +127,6 @@ export default async function PricingPage() {
                   <PaymentDialog
                     tier={tier.id === "expert" ? "expert" : "premium"}
                     tierName={tier.name}
-                    priceEur={tier.price}
                     priceFcfa={tier.priceFcfa}
                     label="Prolonger ou reprendre"
                     isAuthenticated
@@ -141,7 +144,6 @@ export default async function PricingPage() {
                   <PaymentDialog
                     tier={tier.id === "expert" ? "expert" : "premium"}
                     tierName={tier.name}
-                    priceEur={tier.price}
                     priceFcfa={tier.priceFcfa}
                     label={`Choisir ${tier.name}`}
                     highlighted={tier.highlighted}

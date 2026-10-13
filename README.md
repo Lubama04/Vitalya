@@ -204,7 +204,7 @@ on conflict (name) do update set sha256_hex = excluded.sha256_hex;
 ```
 
 ### Stripe
-1. Créer deux produits récurrents mensuels (Premium 5 €, Expert 10 €) → `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_EXPERT`.
+1. Créer deux produits récurrents mensuels (Premium 6 000 FCFA, Expert 11 000 FCFA, devise XAF) → `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_EXPERT`.
 2. Webhook vers `https://<domaine>/api/stripe/webhook` avec les événements `checkout.session.completed`, `customer.subscription.created|updated|deleted` → `STRIPE_WEBHOOK_SECRET`.
 3. Renseigner `STRIPE_SECRET_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Le paiement s'active automatiquement quand les 5 variables sont présentes.
 

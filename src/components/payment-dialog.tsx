@@ -25,7 +25,6 @@ type Operator = { code: string; name: string }
 export function PaymentDialog({
   tier,
   tierName,
-  priceEur,
   priceFcfa,
   label,
   highlighted,
@@ -34,7 +33,6 @@ export function PaymentDialog({
 }: {
   tier: "premium" | "expert"
   tierName: string
-  priceEur: number
   priceFcfa: number
   label: string
   highlighted?: boolean
@@ -66,7 +64,7 @@ export function PaymentDialog({
           <DialogTitle className="text-2xl">Abonnement {tierName}</DialogTitle>
           <DialogDescription className="flex flex-wrap items-baseline gap-x-2">
             <span className="font-heading text-3xl font-bold text-nuit">{formatFcfa(priceFcfa)}</span>
-            <span>environ {priceEur} € · 1 mois d&apos;accès, sans renouvellement automatique</span>
+            <span>par mois · 1 mois d&apos;accès, sans renouvellement automatique</span>
           </DialogDescription>
         </DialogHeader>
         <PaymentForm tier={tier} defaultCountry={defaultCountry} />

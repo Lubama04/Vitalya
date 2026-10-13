@@ -50,8 +50,6 @@ export function isRole(value: unknown): value is Role {
 export type PricingTier = {
   id: AccessLevel
   name: string
-  /** Équivalent indicatif en euros (arrondi) */
-  price: number
   /** Prix mensuel en francs CFA (doit correspondre à subscription_price en base) */
   priceFcfa: number
   description: string
@@ -63,7 +61,6 @@ export const PRICING: PricingTier[] = [
   {
     id: "free",
     name: "Gratuit",
-    price: 0,
     priceFcfa: 0,
     description: "Pour découvrir Vitalya et ses conseils essentiels.",
     features: [
@@ -76,7 +73,6 @@ export const PRICING: PricingTier[] = [
   {
     id: "premium",
     name: "Premium",
-    price: 9,
     priceFcfa: 6000,
     description: "Pour aller plus loin dans votre routine santé et beauté.",
     features: [
@@ -91,7 +87,6 @@ export const PRICING: PricingTier[] = [
   {
     id: "expert",
     name: "Expert",
-    price: 17,
     priceFcfa: 11000,
     description: "L'accès intégral, avec l'éclairage de nos spécialistes.",
     features: [

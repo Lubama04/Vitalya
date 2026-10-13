@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Crown, Gem, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ACCESS_LABELS, PRICING, type AccessLevel } from "@/lib/constants"
+import { ACCESS_LABELS, formatFcfa, PRICING, type AccessLevel } from "@/lib/constants"
 
 /** Encart affiché à la place de la suite d'un article réservé. */
 export function Paywall({ level, isAuthenticated }: { level: AccessLevel; isAuthenticated: boolean }) {
@@ -24,7 +24,7 @@ export function Paywall({ level, isAuthenticated }: { level: AccessLevel; isAuth
           <h2 className="mt-3 font-heading text-3xl font-bold">La suite est réservée à nos abonnés</h2>
           <p className="mx-auto mt-3 max-w-md text-white/75">
             Abonnez-vous à l&apos;offre {ACCESS_LABELS[level]}
-            {tier ? ` pour ${tier.price} € par mois` : ""} et lisez cet article en entier, ainsi que tous
+            {tier ? ` pour ${formatFcfa(tier.priceFcfa)} par mois` : ""} et lisez cet article en entier, ainsi que tous
             nos dossiers.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

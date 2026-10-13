@@ -5,7 +5,7 @@ import { ArticleCard } from "@/components/article/article-card"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { Button } from "@/components/ui/button"
 import { getCategories, getLatestArticles } from "@/lib/data"
-import { PRICING, textOn } from "@/lib/constants"
+import { formatFcfa, PRICING, textOn } from "@/lib/constants"
 
 // Page publique mise en cache (ISR) : régénérée toutes les 5 minutes,
 // et immédiatement à chaque publication (revalidatePath dans le back-office).
@@ -179,8 +179,14 @@ export default async function HomePage() {
                 >
                   <p className="text-sm font-semibold text-white/70">{tier.name}</p>
                   <p className="mt-1 font-heading text-3xl font-bold">
-                    {tier.price === 0 ? "0 €" : `${tier.price} €`}
-                    <span className="text-sm font-normal text-white/80"> /mois</span>
+                    {tier.priceFcfa === 0 ? (
+                      "Gratuit"
+                    ) : (
+                      <>
+                        {formatFcfa(tier.priceFcfa)}
+                        <span className="text-sm font-normal text-white/80"> /mois</span>
+                      </>
+                    )}
                   </p>
                 </li>
               ))}
