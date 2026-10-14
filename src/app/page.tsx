@@ -2,9 +2,10 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, BookOpen, Crown, Leaf, Sparkles } from "lucide-react"
 import { ArticleCard } from "@/components/article/article-card"
+import { HomeUpgradeBanner } from "@/components/conversion/home-upgrade-banner"
 import { NewsletterForm } from "@/components/newsletter-form"
 import { Button } from "@/components/ui/button"
-import { getCategories, getLatestArticles } from "@/lib/data"
+import { getCategories, getCurrentIssueReserved, getLatestArticles } from "@/lib/data"
 import { formatFcfa, PRICING, textOn } from "@/lib/constants"
 
 // Page publique mise en cache (ISR) : régénérée toutes les 5 minutes,
@@ -12,9 +13,10 @@ import { formatFcfa, PRICING, textOn } from "@/lib/constants"
 export const revalidate = 300
 
 export default async function HomePage() {
-  const [{ articles }, categories] = await Promise.all([
+  const [{ articles }, categories, reserved] = await Promise.all([
     getLatestArticles({ limit: 7 }),
     getCategories(),
+    getCurrentIssueReserved(),
   ])
   const [featured, ...others] = articles
 
@@ -86,6 +88,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Invitation Premium pour un lecteur connecté gratuit (résolue dans le navigateur) */}
+      <HomeUpgradeBanner reservedCount={reserved.length} />
 
       {/* ─── Derniers articles ────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20" aria-labelledby="titre-une">

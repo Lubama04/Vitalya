@@ -7,7 +7,6 @@ import { z } from "zod"
 const serverSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(20).optional(),
   RESEND_API_KEY: z.string().startsWith("re_").optional(),
-  RESEND_FROM_EMAIL: z.string().min(3).default("Vitalya <onboarding@resend.dev>"),
   STRIPE_SECRET_KEY: z.string().startsWith("sk_").optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith("whsec_").optional(),
   STRIPE_PRICE_PREMIUM: z.string().startsWith("price_").optional(),

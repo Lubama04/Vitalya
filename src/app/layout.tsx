@@ -11,6 +11,7 @@ import {
 import { SiteHeader } from "@/components/layout/site-header"
 import { SiteFooter } from "@/components/layout/site-footer"
 import { ClientExtras } from "@/components/client-extras"
+import { GuestBanner } from "@/components/conversion/guest-banner"
 import { INSTALL_CAPTURE_SCRIPT } from "@/components/pwa/install-capture"
 import { SITE } from "@/lib/constants"
 import { siteUrl } from "@/lib/env"
@@ -112,6 +113,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <main id="contenu" className="flex-1 overflow-x-clip">
           {children}
         </main>
+        {/* Invitation à créer un compte (visiteurs non connectés), juste au-dessus du pied de page */}
+        <GuestBanner />
         <SiteFooter />
         <ClientExtras />
       </body>

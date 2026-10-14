@@ -5,6 +5,8 @@ import { notFound } from "next/navigation"
 import { ArrowLeft, CalendarDays, Clock, Eye, Pencil } from "lucide-react"
 import { AccessBadge } from "@/components/article/access-badge"
 import { ArticleCard } from "@/components/article/article-card"
+import { IssueUpsell } from "@/components/conversion/issue-upsell"
+import { ReadingNudge } from "@/components/conversion/reading-nudge"
 import { Comments } from "@/components/article/comments"
 import { LikeButton } from "@/components/article/like-button"
 import { MdxContent } from "@/components/mdx/mdx-content"
@@ -15,7 +17,7 @@ import { ArticleReader } from "@/components/reader/article-reader"
 import { ProfilAuteur } from "@/components/mdx/cards"
 import { getViewer, isStaff } from "@/lib/auth"
 import { accentOnWhite, formatDate, SITE, textOn } from "@/lib/constants"
-import { getArticleBySlug, getAuthor, getLatestArticles } from "@/lib/data"
+import { getArticleBySlug, getAuthor, getCurrentIssueReserved, getLatestArticles } from "@/lib/data"
 import { siteUrl } from "@/lib/env"
 import { createClient } from "@/lib/supabase/server"
 
@@ -52,12 +54,17 @@ export default async function ArticlePage({ params }: Props) {
   const [article, viewer] = await Promise.all([getArticleBySlug(slug), getViewer()])
   if (!article) notFound()
 
+  // Lecteur connecté au niveau gratuit (ni abonné, ni équipe) : invitations à s'abonner
+  const isFreeReader = viewer !== null && viewer.tier === "free" && !isStaff(viewer)
+  const showIssueUpsell = isFreeReader && article.accessLevel === "free" && article.hasAccess
+
   const supabase = await createClient()
-  const [{ data: stats }, { data: comments }, related, author] = await Promise.all([
+  const [{ data: stats }, { data: comments }, related, author, reserved] = await Promise.all([
     supabase.rpc("get_article_stats", { p_article_id: article.id }).maybeSingle(),
     supabase.rpc("get_article_comments", { p_article_id: article.id }),
     getLatestArticles({ limit: 3, categoryId: article.category?.id, excludeId: article.id }),
     getAuthor(article.authorProfileId),
+    showIssueUpsell ? getCurrentIssueReserved() : Promise.resolve([]),
   ])
 
   // Données structurées pour le référencement
@@ -91,6 +98,7 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <article>
       <ViewTracker slug={article.slug} />
+      {isFreeReader && <ReadingNudge />}
       <script
         type="application/ld+json"
         // JSON sérialisé : les « < » sont échappés pour empêcher toute sortie du bloc script
@@ -178,6 +186,7 @@ export default async function ArticlePage({ params }: Props) {
           }
           footer={
             <>
+              {showIssueUpsell && <IssueUpsell articles={reserved.filter((item) => item.id !== article.id)} />}
               {author && <ProfilAuteur author={author} className="mt-14" />}
               <div className="mt-12 flex flex-wrap items-center gap-3 border-y py-6">
                 <LikeButton

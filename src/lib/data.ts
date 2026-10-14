@@ -147,3 +147,36 @@ export const getArticleBySlug = cache(async (slug: string): Promise<ArticleDetai
     updatedAt: row.updated_at,
   }
 })
+
+export type ReservedArticle = { id: string; title: string; slug: string; accessLevel: AccessLevel }
+
+/**
+ * Articles réservés (Premium / Expert) du dernier numéro paru, dans l'ordre du sommaire.
+ * Seuls les titres sont lus : jamais le contenu. Sans numéro, retourne une liste vide.
+ */
+export const getCurrentIssueReserved = cache(async (): Promise<ReservedArticle[]> => {
+  const supabase = createPublicClient()
+  const { data: edition } = await supabase
+    .from("magazine_editions")
+    .select("article_ids")
+    .lte("date_publication", new Date().toISOString())
+    .order("numero", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (!edition || edition.article_ids.length === 0) return []
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("id, title, slug, access_level")
+    .in("id", edition.article_ids)
+    .neq("access_level", "free")
+    .eq("published", true)
+  if (error) {
+    console.error("getCurrentIssueReserved", error.message)
+    return []
+  }
+  const order = new Map(edition.article_ids.map((id, index) => [id, index]))
+  return data
+    .map((row) => ({ id: row.id, title: row.title, slug: row.slug, accessLevel: isAccessLevel(row.access_level) ? row.access_level : "premium" }))
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+})

@@ -52,6 +52,7 @@ export function HeaderAccount() {
       if (cancelled || !profile) return
       setAccount({
         name: profile.full_name || profile.email,
+        firstName: profile.full_name?.trim().split(/\s+/)[0] || null,
         email: profile.email,
         avatarUrl: profile.avatar_url,
         tier: isAccessLevel(tier) ? tier : "free",

@@ -179,7 +179,7 @@ Le paywall affiche les **3 premiers paragraphes** (blocs séparés par une ligne
 ### Resend
 Expéditeur de tous les emails : `Vitalya <newsletter@vitalya.africa>`, réponses vers `flaugustb@gmail.com` (`src/lib/email.ts`) : le domaine `vitalya.africa` doit être vérifié dans Resend. Newsletter : éditeur Vitalya (markdown enrichi : `![image](https://…)`, `[[Bouton|https://…|vert]]`, `---`) ou HTML personnalisé ; variables `{{prénom}}` et `{{lien_desabonnement}}` ; modèles réutilisables (table `newsletter_templates`).
 
-Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` et `RESEND_FROM_EMAIL` sur Vercel. Tous les emails (newsletter, bienvenue, alerte nouvel article, confirmation de paiement) s'activent avec cette clé ; sans elle, ils sont simplement ignorés.
+Créer une clé API, vérifier le domaine d'envoi, puis renseigner `RESEND_API_KEY` sur Vercel. L'expéditeur est fixé dans `src/lib/email.ts` : « Vitalya <newsletter@vitalya.africa> », réponses vers « Vitalya <flaugustb@gmail.com> ». Tous les emails (newsletter, bienvenue, alerte nouvel article, confirmation de paiement) s'activent avec cette clé ; sans elle, ils sont simplement ignorés.
 
 ### Edge Functions de paiement
 Secrets Supabase (*Edge Functions → Secrets*) : `PAWAPAY_API_KEY`, `PAWAPAY_BASE_URL`, `MONEYFUSION_API_URL`. Diagnostic sans secret : `GET https://<projet>.supabase.co/functions/v1/create-payment` renvoie les prestataires configurés.

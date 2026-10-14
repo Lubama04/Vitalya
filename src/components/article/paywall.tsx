@@ -3,40 +3,46 @@ import { Crown, Gem, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ACCESS_LABELS, formatFcfa, PRICING, type AccessLevel } from "@/lib/constants"
 
-/** Encart affiché à la place de la suite d'un article réservé. */
+/**
+ * Encart affiché après l'aperçu d'un article réservé (titre et couverture sont dans l'en-tête,
+ * les 2 premiers paragraphes viennent de get_article_body). Un fondu blanc masque la fin de l'aperçu.
+ */
 export function Paywall({ level, isAuthenticated }: { level: AccessLevel; isAuthenticated: boolean }) {
   const tier = PRICING.find((item) => item.id === level)
+  const label = ACCESS_LABELS[level]
   const Icon = level === "expert" ? Gem : Crown
 
   return (
     <div className="relative">
-      {/* Fondu sur la fin de l'aperçu */}
-      <div aria-hidden className="pointer-events-none absolute -top-40 right-0 left-0 h-40 bg-gradient-to-b from-white/0 to-white" />
-      <div className="relative overflow-hidden rounded-3xl border border-or/40 bg-gradient-to-br from-nuit to-vert-fonce p-8 text-center text-white shadow-xl sm:p-12">
-        <div aria-hidden className="absolute -top-16 -right-16 size-48 rounded-full bg-or/20 blur-2xl" />
-        <div className="relative">
-          <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-or text-nuit">
-            <Lock className="size-6" aria-hidden />
-          </span>
-          <p className="inline-flex items-center gap-1.5 text-sm font-semibold tracking-wider text-or uppercase">
-            <Icon className="size-4" aria-hidden /> Article {ACCESS_LABELS[level]}
-          </p>
-          <h2 className="mt-3 font-heading text-3xl font-bold">La suite est réservée à nos abonnés</h2>
-          <p className="mx-auto mt-3 max-w-md text-white/75">
-            Abonnez-vous à l&apos;offre {ACCESS_LABELS[level]}
-            {tier ? ` pour ${formatFcfa(tier.priceFcfa)} par mois` : ""} et lisez cet article en entier, ainsi que tous
-            nos dossiers.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="h-12 bg-orange px-6 text-nuit hover:bg-orange/90">
-              <Link href="/abonnement">Je m&apos;abonne</Link>
-            </Button>
-            {!isAuthenticated && (
-              <Button asChild size="lg" variant="outline" className="h-12 border-white/30 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white">
-                <Link href="/auth">Déjà abonné·e ? Se connecter</Link>
-              </Button>
-            )}
-          </div>
+      {/* Fondu blanc sur la fin de l'aperçu */}
+      <div aria-hidden className="pointer-events-none absolute -top-48 right-0 left-0 h-48 bg-gradient-to-b from-white/0 via-white/85 to-white" />
+      <div className="relative mx-auto max-w-2xl rounded-3xl border-2 border-vert-fonce/80 bg-white p-6 text-center shadow-xl sm:p-10">
+        <span className="mx-auto mb-5 flex size-14 items-center justify-center rounded-full bg-vert-pale text-vert-fonce">
+          <Lock className="size-6" aria-hidden />
+        </span>
+        <p className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider text-orange-fonce uppercase sm:text-sm">
+          <Icon className="size-4" aria-hidden /> Article {label}
+        </p>
+        <h2 className="mt-3 font-heading text-2xl font-bold text-nuit sm:text-3xl">
+          Cet article est réservé aux abonnés {label}.
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-nuit/75">
+          Rejoignez Vitalya {label} pour lire cet article et tous les suivants.
+        </p>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <Button asChild size="lg" className="h-12 w-full bg-orange px-6 text-base text-nuit hover:bg-orange/90 sm:w-auto">
+            <Link href="/abonnement">
+              S&apos;abonner{tier ? ` · ${formatFcfa(tier.priceFcfa)}/mois` : ""}
+            </Link>
+          </Button>
+          <Link href="/abonnement" className="text-sm font-semibold text-vert-fonce underline-offset-4 hover:underline">
+            Voir toutes les offres
+          </Link>
+          {!isAuthenticated && (
+            <Link href="/auth" className="text-sm text-nuit/70 underline-offset-4 hover:underline">
+              Déjà abonné·e ? Se connecter
+            </Link>
+          )}
         </div>
       </div>
     </div>
